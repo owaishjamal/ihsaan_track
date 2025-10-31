@@ -258,6 +258,47 @@ CREATE TABLE IF NOT EXISTS achievements (
 );
 
 -- =============================================
+-- FRIENDS SYSTEM
+-- =============================================
+
+-- Friend Requests Table
+CREATE TABLE IF NOT EXISTS friend_requests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  requester_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  receiver_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'rejected', 'blocked'
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  
+  -- Prevent duplicate requests
+  UNIQUE(requester_id, receiver_id),
+  -- Ensure requester and receiver are different
+  CHECK (requester_id != receiver_id)
+);
+
+-- Indexes for friend requests
+CREATE INDEX IF NOT EXISTS idx_friend_requests_requester ON friend_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_receiver ON friend_requests(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_status ON friend_requests(status);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_requester_status ON friend_requests(requester_id, status);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_receiver_status ON friend_requests(receiver_id, status);
+
+-- Function to automatically update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_friend_requests_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to auto-update updated_at
+CREATE TRIGGER update_friend_requests_timestamp
+  BEFORE UPDATE ON friend_requests
+  FOR EACH ROW
+  EXECUTE FUNCTION update_friend_requests_updated_at();
+
+-- =============================================
 -- INDEXES FOR PERFORMANCE
 -- =============================================
 

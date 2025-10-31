@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/Toaster';
@@ -21,6 +21,12 @@ export default function Page() {
   const [userId, setUserId] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (typeof window !== 'undefined' && (localStorage.getItem('theme') as 'light' | 'dark')) || 'light');
   const [badgesByProfile, setBadgesByProfile] = useState<Record<string, { label: string; achieved: boolean; remaining: number }>>({});
+  
+  // Friends system
+  const [friends, setFriends] = useState<Array<{id: string, friend_user_id: string, friend_profile: any}>>([]);
+  const [friendRequestsReceived, setFriendRequestsReceived] = useState<Array<any>>([]);
+  const [friendRequestsSent, setFriendRequestsSent] = useState<Array<any>>([]);
+  const [showFriendsSection, setShowFriendsSection] = useState(false);
 
   // Memoize quotes to prevent recreation on every render
   const quotes = useMemo(() => [
@@ -120,6 +126,130 @@ useEffect(() => {
     if (mine) setSelectedProfileId(mine.id);
     }
 }, [profiles, selectedProfileId, userId]);
+
+  // Load friends and friend requests
+  const loadFriends = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const { authFetch } = await import('@/lib/authFetch');
+      const [friendsRes, receivedRes, sentRes] = await Promise.all([
+        authFetch('/api/friends?type=friends'),
+        authFetch('/api/friends?type=received'),
+        authFetch('/api/friends?type=sent')
+      ]);
+      
+      if (friendsRes.ok) {
+        const friendsData = await friendsRes.json();
+        setFriends(friendsData || []);
+      }
+      if (receivedRes.ok) {
+        const receivedData = await receivedRes.json();
+        setFriendRequestsReceived(receivedData || []);
+      }
+      if (sentRes.ok) {
+        const sentData = await sentRes.json();
+        setFriendRequestsSent(sentData || []);
+      }
+    } catch (e) {
+      if (process.env.NODE_ENV === 'development') console.error('Failed to load friends', e);
+    }
+  }, [userId]);
+
+  // Load friends when user is available
+  useEffect(() => {
+    if (userId) {
+      loadFriends();
+      // Refresh friends every 30 seconds
+      const interval = setInterval(loadFriends, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [userId, loadFriends]);
+
+  // Send friend request
+  const sendFriendRequest = async (receiverUserId: string) => {
+    if (!userId) return;
+    try {
+      const { authFetch } = await import('@/lib/authFetch');
+      const response = await authFetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receiver_user_id: receiverUserId })
+      });
+      if (response.ok) {
+        toast('Friend request sent!');
+        loadFriends();
+      } else {
+        const error = await response.json();
+        toast(error.error || 'Failed to send friend request');
+      }
+    } catch (e) {
+      toast('Failed to send friend request');
+    }
+  };
+
+  // Accept friend request
+  const acceptFriendRequest = async (requestId: string) => {
+    if (!userId) return;
+    try {
+      const { authFetch } = await import('@/lib/authFetch');
+      const response = await authFetch('/api/friends', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request_id: requestId, action: 'accept' })
+      });
+      if (response.ok) {
+        toast('Friend request accepted!');
+        loadFriends();
+      } else {
+        const error = await response.json();
+        toast(error.error || 'Failed to accept friend request');
+      }
+    } catch (e) {
+      toast('Failed to accept friend request');
+    }
+  };
+
+  // Reject friend request
+  const rejectFriendRequest = async (requestId: string) => {
+    if (!userId) return;
+    try {
+      const { authFetch } = await import('@/lib/authFetch');
+      const response = await authFetch('/api/friends', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request_id: requestId, action: 'reject' })
+      });
+      if (response.ok) {
+        toast('Friend request rejected');
+        loadFriends();
+      } else {
+        const error = await response.json();
+        toast(error.error || 'Failed to reject friend request');
+      }
+    } catch (e) {
+      toast('Failed to reject friend request');
+    }
+  };
+
+  // Cancel/Remove friend
+  const removeFriend = async (requestId: string) => {
+    if (!userId) return;
+    try {
+      const { authFetch } = await import('@/lib/authFetch');
+      const response = await authFetch(`/api/friends?id=${requestId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        toast('Friend removed');
+        loadFriends();
+      } else {
+        const error = await response.json();
+        toast(error.error || 'Failed to remove friend');
+      }
+    } catch (e) {
+      toast('Failed to remove friend');
+    }
+  };
 
   const toggleField = async (profileId: string, field: string) => {
     // Guard: only allow toggles on own profile
@@ -363,6 +493,24 @@ useEffect(() => {
     URL.revokeObjectURL(url);
   };
 
+  // Resolve my profile and others - MUST BE BEFORE EARLY RETURN
+  const myProfile = userId ? profiles.find(p => p.user_id === userId) : undefined;
+  
+  // Get friend profile IDs - MUST BE BEFORE EARLY RETURN
+  const friendProfileIds = useMemo(() => {
+    return friends.map(f => f.friend_profile?.id).filter(Boolean) as string[];
+  }, [friends]);
+  
+  // Friends' profiles (only accepted friends) - MUST BE BEFORE EARLY RETURN
+  const friendsProfiles = useMemo(() => {
+    return profiles.filter(p => friendProfileIds.includes(p.id));
+  }, [profiles, friendProfileIds]);
+  
+  // Other profiles (excluding self and friends) - for sending friend requests - MUST BE BEFORE EARLY RETURN
+  const otherProfilesForRequests = useMemo(() => {
+    return userId ? profiles.filter(p => p.user_id !== userId && !friendProfileIds.includes(p.id) && p.user_id) : [];
+  }, [userId, profiles, friendProfileIds]);
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -373,10 +521,6 @@ useEffect(() => {
       </div>
     );
   }
-
-  // Resolve my profile and others
-  const myProfile = userId ? profiles.find(p => p.user_id === userId) : undefined;
-  const otherProfiles = userId ? profiles.filter(p => p.user_id !== userId) : profiles;
 
   // Helper to create my tracker profile if missing
   const createMyTracker = async () => {
@@ -403,97 +547,206 @@ useEffect(() => {
   const textPrimary = isDark ? '#e2e8f0' : '#0f172a';
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: pageBg, padding: 'clamp(12px, 4vw, 20px)' }}>
-      {/* Header */}
-      <div className="card-hover" style={{ position: 'sticky', top: 0, zIndex: 30, background: cardBgGrad, padding: 'clamp(12px, 3vw, 20px)', marginBottom: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', boxShadow: '0 8px 24px rgba(2,6,23,0.12)', border: `1px solid ${cardBorder}` }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Logo and Title Section */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-              <div style={{ position: 'relative', width: 'clamp(32px, 8vw, 36px)', height: 'clamp(32px, 8vw, 36px)', borderRadius: 8, overflow: 'hidden', flex: '0 0 auto' }}>
-                {/* Fallback SVG (always present) */}
-                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', width: '100%', height: '100%' }}>
-                  <rect width="36" height="36" rx="8" fill={`url(#logoGradient${theme})`}/>
-                  <path d="M18 10L20.5 14.5L26 17L20.5 19.5L18 24L15.5 19.5L10 17L15.5 14.5L18 10Z" fill="white" opacity="0.95"/>
-                  <defs>
-                    <linearGradient id={`logoGradient${theme}`} x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                      <stop stopColor={isDark ? '#2563EB' : '#2563EB'}/>
-                      <stop offset="1" stopColor={isDark ? '#1D4ED8' : '#1D4ED8'}/>
-                    </linearGradient>
-                  </defs>
-                </svg>
-                {/* Provided PNG overlaid (auto-hides if missing) */}
-                <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-                  <Image src="/logo_ihsaantrack.png" alt="IhsaanTrack logo" width={36} height={36} className="object-cover" priority onError={(e) => { try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {} }} />
-                </div>
+    <div style={{ minHeight: '100vh', backgroundColor: pageBg, padding: 'clamp(12px, 4vw, 20px)', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+      {/* Header - Enhanced for Mobile */}
+      <div className="card-hover" style={{ position: 'sticky', top: 0, zIndex: 30, background: cardBgGrad, padding: 'clamp(16px, 4vw, 24px)', marginBottom: 'clamp(16px, 4vw, 24px)', borderRadius: '16px', boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(2,6,23,0.15)', border: `1px solid ${cardBorder}`, overflow: 'hidden' }}>
+        {/* Top Section: Logo, Title, Theme Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(12px, 3vw, 16px)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 3vw, 14px)', flex: 1 }}>
+            <div style={{ position: 'relative', width: 'clamp(48px, 12vw, 56px)', height: 'clamp(48px, 12vw, 56px)', borderRadius: '12px', overflow: 'hidden', flex: '0 0 auto', boxShadow: isDark ? '0 4px 12px rgba(33,136,80,0.3)' : '0 4px 12px rgba(33,136,80,0.2)' }}>
+              {/* Logo image */}
+              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <Image src="/logo_ihsaantrack.png" alt="IhsaanTrack logo - إحسان" width={56} height={56} style={{ objectFit: 'contain', width: '100%', height: '100%' }} priority />
               </div>
-              <h1 className="heading-accent" style={{ fontSize: 'clamp(20px, 5vw, 26px)', fontWeight: 800, margin: 0, color: textPrimary }}>IhsaanTrack</h1>
             </div>
-            <p style={{ margin: '6px 0 0 0', color: textMuted, fontSize: 'clamp(12px, 3vw, 14px)' }}>{headerQuote}</p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 className="heading-accent" style={{ fontSize: 'clamp(22px, 6vw, 28px)', fontWeight: 800, margin: 0, marginBottom: '12px', color: textPrimary, lineHeight: 1.2, letterSpacing: '-0.02em' }}>IhsaanTrack</h1>
+              <p style={{ margin: '0', color: textMuted, fontSize: 'clamp(11px, 2.8vw, 13px)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{headerQuote}</p>
+            </div>
           </div>
+          <button 
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            title="Toggle theme"
+            style={{ 
+              padding: 'clamp(10px, 3vw, 12px)', 
+              background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', 
+              color: textPrimary, 
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, 
+              borderRadius: '12px', 
+              cursor: 'pointer', 
+              minHeight: '44px', 
+              minWidth: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 'clamp(18px, 4.5vw, 22px)',
+              transition: 'all 0.2s ease',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            {isDark ? '🌙' : '☀️'}
+          </button>
+        </div>
 
-          {/* Navigation and Controls - Responsive */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Mobile Navigation - Compact */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <a href="#rewards" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Rewards">Rewards</a>
-              <a href="#my-tracker" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="My Tracker">My Tracker</a>
-              <a href="#tasks" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Tasks">Tasks</a>
-              <a href="#others" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Others">Others</a>
-            </div>
-
-            {/* Controls Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <button 
-                onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                title="Toggle theme"
-                style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', background: isDark ? '#0f172a' : '#f8fafc', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, cursor: 'pointer', minHeight: '36px' }}>
-                {isDark ? '🌙' : '☀️'}
-              </button>
-              <input
-                type="date"
-                value={currentDate}
-                onChange={(e) => setCurrentDate(e.target.value)}
-                style={{ padding: '8px', fontSize: 'clamp(12px, 3vw, 14px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, background: isDark ? '#0f172a' : '#ffffff', color: textPrimary, borderRadius: '8px', minHeight: '36px', flex: '1 1 140px' }}
-              />
-              <button 
-                onClick={() => setCurrentDate(new Date().toISOString().split('T')[0])}
-                style={{ padding: '8px 12px', fontSize: 'clamp(11px, 2.5vw, 13px)', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer', minHeight: '36px' }}
-              >
-                Today
-              </button>
-              <button
-                onClick={exportData}
-                style={{ padding: '8px 12px', fontSize: 'clamp(11px, 2.5vw, 13px)', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer', minHeight: '36px' }}
-              >
-                Export
-              </button>
-              {!userEmail ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  <a href="/login" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc', minHeight: '36px', display: 'flex', alignItems: 'center' }}>Login</a>
-                  <a href="/signup" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: '1px solid var(--primary)', borderRadius: '8px', textDecoration: 'none', color: 'white', background: 'var(--primary)', minHeight: '36px', display: 'flex', alignItems: 'center' }}>Sign up</a>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>
-                  <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>{userEmail}</span>
-                  <button
-                    onClick={async () => { await supabase.auth.signOut(); window.location.reload(); }}
-                    style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer', background: isDark ? '#0f172a' : '#f8fafc', color: textPrimary, minHeight: '36px' }}
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
+        {/* Quick Navigation - Horizontal Scroll on Mobile */}
+        <div className="table-responsive" style={{ width: '100%', marginBottom: 'clamp(12px, 3vw, 16px)', overflowX: 'auto', overflowY: 'visible', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}>
+          <div style={{ display: 'flex', gap: 'clamp(6px, 1.5vw, 8px)', minWidth: 'max-content', paddingBottom: '4px' }}>
+            <a href="#rewards" style={{ padding: 'clamp(10px, 2.5vw, 12px) clamp(14px, 3.5vw, 16px)', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 600, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: '10px', textDecoration: 'none', color: textPrimary, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', flexShrink: 0, backdropFilter: 'blur(10px)', transition: 'all 0.2s ease' }} aria-label="Rewards">
+              <span>🏅</span>
+              <span>Rewards</span>
+            </a>
+            <a href="#my-tracker" style={{ padding: 'clamp(10px, 2.5vw, 12px) clamp(14px, 3.5vw, 16px)', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 600, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: '10px', textDecoration: 'none', color: textPrimary, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', flexShrink: 0, backdropFilter: 'blur(10px)', transition: 'all 0.2s ease' }} aria-label="My Tracker">
+              <span>📊</span>
+              <span>My Tracker</span>
+            </a>
+            <a href="#tasks" style={{ padding: 'clamp(10px, 2.5vw, 12px) clamp(14px, 3.5vw, 16px)', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 600, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: '10px', textDecoration: 'none', color: textPrimary, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', flexShrink: 0, backdropFilter: 'blur(10px)', transition: 'all 0.2s ease' }} aria-label="Tasks">
+              <span>✅</span>
+              <span>Tasks</span>
+            </a>
+              <a href="#friends" style={{ padding: 'clamp(10px, 2.5vw, 12px) clamp(14px, 3.5vw, 16px)', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 600, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, borderRadius: '10px', textDecoration: 'none', color: textPrimary, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', flexShrink: 0, backdropFilter: 'blur(10px)', transition: 'all 0.2s ease' }} aria-label="Friends">
+              <span>👥</span>
+              <span>Friends</span>
+            </a>
           </div>
         </div>
-        {/* Sliding Quotes */}
-        <div className="quote-marquee" style={{ marginTop: 12, borderTop: `1px solid ${cardBorder}`, paddingTop: 12 }}>
+
+        {/* Controls Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 2vw, 10px)', marginBottom: 'clamp(12px, 3vw, 16px)' }}>
+          {/* Date & Actions Row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
+            <input
+              type="date"
+              value={currentDate}
+              onChange={(e) => setCurrentDate(e.target.value)}
+              style={{ 
+                padding: 'clamp(10px, 2.5vw, 12px)', 
+                fontSize: 'clamp(13px, 3.2vw, 15px)', 
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, 
+                background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)', 
+                color: textPrimary, 
+                borderRadius: '10px', 
+                minHeight: '44px', 
+                flex: '1 1 160px',
+                backdropFilter: 'blur(10px)'
+              }}
+            />
+            <button 
+              onClick={() => setCurrentDate(new Date().toISOString().split('T')[0])}
+              style={{ 
+                padding: 'clamp(10px, 2.5vw, 12px) clamp(14px, 3.5vw, 16px)', 
+                fontSize: 'clamp(12px, 3vw, 14px)', 
+                fontWeight: 600,
+                backgroundColor: isDark ? 'rgba(37,99,235,0.2)' : 'rgba(37,99,235,0.1)', 
+                color: isDark ? '#60A5FA' : '#2563EB', 
+                border: `1px solid ${isDark ? 'rgba(96,165,250,0.3)' : 'rgba(37,99,235,0.2)'}`, 
+                borderRadius: '10px', 
+                cursor: 'pointer', 
+                minHeight: '44px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              Today
+            </button>
+            <button
+              onClick={exportData}
+              style={{ 
+                padding: 'clamp(10px, 2.5vw, 12px) clamp(14px, 3.5vw, 16px)', 
+                fontSize: 'clamp(12px, 3vw, 14px)', 
+                fontWeight: 600,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', 
+                color: textPrimary, 
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, 
+                borderRadius: '10px', 
+                cursor: 'pointer', 
+                minHeight: '44px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>💾</span>
+              <span>Export</span>
+            </button>
+          </div>
+
+          {/* Auth Section */}
+          {!userEmail ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
+              <a href="/login" style={{ 
+                padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)', 
+                fontSize: 'clamp(13px, 3.2vw, 15px)', 
+                fontWeight: 600,
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, 
+                borderRadius: '10px', 
+                textDecoration: 'none', 
+                color: textPrimary, 
+                background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)', 
+                minHeight: '44px', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '1 1 auto',
+                backdropFilter: 'blur(10px)'
+              }}>
+                Login
+              </a>
+              <a href="/signup" style={{ 
+                padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)', 
+                fontSize: 'clamp(13px, 3.2vw, 15px)', 
+                fontWeight: 600,
+                border: 'none', 
+                borderRadius: '10px', 
+                textDecoration: 'none', 
+                color: 'white', 
+                background: 'linear-gradient(135deg, var(--primary), var(--primary-600))', 
+                minHeight: '44px', 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '1 1 auto',
+                boxShadow: '0 4px 12px rgba(37,99,235,0.3)'
+              }}>
+                Sign up
+              </a>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 10px)', flexWrap: 'wrap', padding: 'clamp(10px, 2.5vw, 12px)', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderRadius: '10px', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', color: textMuted, marginBottom: '2px' }}>Logged in as</div>
+                <div style={{ fontSize: 'clamp(12px, 3vw, 14px)', color: textPrimary, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{myProfile?.name || userEmail || 'User'}</div>
+              </div>
+              <button
+                onClick={async () => { await supabase.auth.signOut(); window.location.reload(); }}
+                style={{ 
+                  padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 14px)', 
+                  fontSize: 'clamp(12px, 3vw, 13px)', 
+                  fontWeight: 600,
+                  border: `1px solid ${isDark ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.2)'}`, 
+                  borderRadius: '8px', 
+                  cursor: 'pointer', 
+                  background: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(239,68,68,0.05)', 
+                  color: isDark ? '#FCA5A5' : '#DC2626', 
+                  minHeight: '40px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Sliding Quotes - Enhanced */}
+        <div className="quote-marquee" style={{ marginTop: 'clamp(12px, 3vw, 16px)', borderTop: `1px solid ${cardBorder}`, paddingTop: 'clamp(12px, 3vw, 16px)' }}>
           <div className="quote-track">
             {[...flowingQuotes, ...flowingQuotes].map((q, i) => (
               <span key={i} className="quote-item">
                 <span>📿</span>
-                <span style={{ fontSize: 13 }}>{q}</span>
+                <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)' }}>{q}</span>
               </span>
             ))}
           </div>
@@ -519,10 +772,13 @@ useEffect(() => {
       {/* My Tracker (editable) or create prompt */}
       {userId && (
         myProfile ? (
-          <div id="my-tracker" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', marginBottom: '16px' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>My Tracker</div>
-            <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+          <div id="my-tracker" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', overflow: 'visible' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>My Tracker</span>
+              <span style={{ fontSize: '11px', color: '#6b7280', fontWeight: 400, display: 'none' }} className="mobile-scroll-hint">← Swipe →</span>
+            </div>
+            <div className="table-responsive" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0, display: 'block', overflowX: 'scroll', overflowY: 'visible' }}>
+            <table style={{ width: 'max-content', minWidth: '950px', borderCollapse: 'collapse' } as React.CSSProperties}>
               <thead style={{ backgroundColor: '#f9fafb' }}>
                 <tr>
                   <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>Person</th>
@@ -579,31 +835,163 @@ useEffect(() => {
       )}
 
 
-      {/* Others' Progress (read-only) */}
-      <div id="others" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>Others&apos; Progress</div>
-        <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
-          <thead style={{ backgroundColor: '#f9fafb' }}>
-            <tr>
-              <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>Person</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Badge</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Fajr</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Dhuhr</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Asr</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Maghrib</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Isha</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Morning Dhikr</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Evening Dhikr</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Tahajjud</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Yā-Sīn</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Mulk</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Before sleep</th>
-              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Istighfar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(otherProfiles).map((profile, idx) => {
+      {/* Friends Management Section */}
+      {userId && (
+        <div id="friends" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', overflow: 'visible' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setShowFriendsSection(!showFriendsSection)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>👥 Friends & Requests</span>
+              {(friendRequestsReceived.length > 0 || friendRequestsSent.length > 0) && (
+                <span style={{ fontSize: '12px', padding: '2px 8px', backgroundColor: 'var(--primary)', color: 'white', borderRadius: '12px' }}>
+                  {friendRequestsReceived.length + friendRequestsSent.length}
+                </span>
+              )}
+            </div>
+            <span style={{ fontSize: '18px', transform: showFriendsSection ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </div>
+          
+          {showFriendsSection && (
+            <div style={{ padding: '16px' }}>
+              {/* Received Requests */}
+              {friendRequestsReceived.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Friend Requests Received</div>
+                  {friendRequestsReceived.map((req) => (
+                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: '#f9fafb', borderRadius: '8px', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                        <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                          {req.requester?.name?.[0]?.toUpperCase() || '?'}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.requester?.name || 'Unknown'}</div>
+                          <div style={{ fontSize: '12px', color: '#6b7280' }}>Wants to be friends</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={() => acceptFriendRequest(req.id)} style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Accept</button>
+                        <button onClick={() => rejectFriendRequest(req.id)} style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Sent Requests */}
+              {friendRequestsSent.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Friend Requests Sent</div>
+                  {friendRequestsSent.map((req) => (
+                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: '#f9fafb', borderRadius: '8px', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                        <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                          {req.receiver?.name?.[0]?.toUpperCase() || '?'}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.receiver?.name || 'Unknown'}</div>
+                          <div style={{ fontSize: '12px', color: '#6b7280' }}>Pending</div>
+                        </div>
+                      </div>
+                      <button onClick={() => removeFriend(req.id)} style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Current Friends */}
+              {friends.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Friends ({friends.length})</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {friends.map((friend) => (
+                      <div key={friend.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', backgroundColor: '#f0f9ff', border: '1px solid #bfdbfe', borderRadius: '8px' }}>
+                        <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
+                          {friend.friend_profile?.name?.[0]?.toUpperCase() || '?'}
+                        </span>
+                        <span style={{ fontSize: '13px', fontWeight: 600 }}>{friend.friend_profile?.name || 'Unknown'}</span>
+                        <button onClick={() => removeFriend(friend.id)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginLeft: '4px' }} title="Remove friend">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Send Friend Request */}
+              {otherProfilesForRequests.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Add Friends</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
+                    {otherProfilesForRequests.map((profile) => {
+                      const hasPendingRequest = friendRequestsSent.some(req => req.receiver_id === profile.user_id);
+                      return (
+                        <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                            <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                              {profile.name[0]?.toUpperCase() || '?'}
+                            </span>
+                            <span style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.name}</span>
+                          </div>
+                          <button 
+                            onClick={() => profile.user_id && sendFriendRequest(profile.user_id)} 
+                            disabled={hasPendingRequest}
+                            style={{ 
+                              padding: '6px 12px', 
+                              fontSize: '12px', 
+                              backgroundColor: hasPendingRequest ? '#d1d5db' : 'var(--primary)', 
+                              color: hasPendingRequest ? '#6b7280' : 'white', 
+                              border: 'none', 
+                              borderRadius: '6px', 
+                              cursor: hasPendingRequest ? 'not-allowed' : 'pointer',
+                              opacity: hasPendingRequest ? 0.6 : 1
+                            }}
+                          >
+                            {hasPendingRequest ? 'Pending' : 'Add Friend'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {friendRequestsReceived.length === 0 && friendRequestsSent.length === 0 && friends.length === 0 && otherProfilesForRequests.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280', fontSize: '14px' }}>
+                  No friend requests or available users to add
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Friends' Progress (read-only) - Only shows accepted friends */}
+      <div id="others" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'visible' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>Friends&apos; Progress {friendsProfiles.length > 0 && `(${friendsProfiles.length})`}</span>
+          <span style={{ fontSize: '11px', color: '#6b7280', fontWeight: 400, display: 'none' }} className="mobile-scroll-hint">← Swipe →</span>
+        </div>
+        {friendsProfiles.length > 0 ? (
+          <div className="table-responsive" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0, display: 'block', overflowX: 'scroll', overflowY: 'visible' }}>
+          <table style={{ width: 'max-content', minWidth: '1050px', borderCollapse: 'collapse' } as React.CSSProperties}>
+            <thead style={{ backgroundColor: '#f9fafb' }}>
+              <tr>
+                <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>Person</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Badge</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Fajr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Dhuhr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Asr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Maghrib</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Isha</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Morning Dhikr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Evening Dhikr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Tahajjud</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Yā-Sīn</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Mulk</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Before sleep</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Istighfar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(friendsProfiles).map((profile, idx) => {
               const entry = entries[`${profile.id}-${currentDate}`] || {};
               return (
                 <tr key={profile.id} style={{ borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
@@ -658,6 +1046,12 @@ useEffect(() => {
           </tbody>
         </table>
         </div>
+        ) : (
+          <div style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>
+            <div style={{ fontSize: '16px', marginBottom: '8px' }}>No friends yet</div>
+            <div style={{ fontSize: '14px' }}>Add friends above to see their progress here</div>
+          </div>
+        )}
       </div>
 
       {/* Dhikr & Dua Reference */}
@@ -682,8 +1076,8 @@ useEffect(() => {
       <div className="card-hover" style={{ marginTop: 'clamp(12px, 4vw, 20px)', backgroundColor: 'white', padding: 'clamp(12px, 4vw, 20px)', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '4px' }}>Weekly Summary</h2>
-            <p style={{ margin: 0, color: '#6b7280', fontSize: 'clamp(12px, 3vw, 14px)' }}>Individual progress over the last 7 days</p>
+            <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '4px' }}>Weekly Summary {friendsProfiles.length > 0 && `(Friends)`}</h2>
+            <p style={{ margin: 0, color: '#6b7280', fontSize: 'clamp(12px, 3vw, 14px)' }}>Progress of you and your friends over the last 7 days</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '500', color: '#374151' }}>Select Person:</label>
@@ -700,7 +1094,13 @@ useEffect(() => {
                 width: '100%'
               }}
             >
-              {profiles.map(profile => (
+              {/* Show own profile first, then friends */}
+              {myProfile && (
+                <option key={myProfile.id} value={myProfile.id}>
+                  {myProfile.name} (Me)
+                </option>
+              )}
+              {friendsProfiles.map(profile => (
                 <option key={profile.id} value={profile.id}>
                   {profile.name}
                 </option>
@@ -709,11 +1109,11 @@ useEffect(() => {
           </div>
         </div>
         
-        {selectedProfileId && (
+        {selectedProfileId && (myProfile?.id === selectedProfileId || friendsProfiles.some(p => p.id === selectedProfileId)) && (
           <>
             <div style={{ marginBottom: '16px', padding: 'clamp(10px, 3vw, 12px)', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: 'clamp(14px, 3.5vw, 16px)', fontWeight: '600', color: '#1e293b' }}>
-                {profiles.find(p => p.id === selectedProfileId)?.name}&apos;s Progress
+                {(myProfile?.id === selectedProfileId ? myProfile : friendsProfiles.find(p => p.id === selectedProfileId))?.name}&apos;s Progress
               </div>
               <div style={{ fontSize: 'clamp(11px, 2.5vw, 12px)', color: '#64748b', marginTop: '2px' }}>
                 Last 7 days from {new Date(new Date(currentDate).getTime() - 6 * 24 * 60 * 60 * 1000).toLocaleDateString()} to {new Date(currentDate).toLocaleDateString()}
@@ -781,30 +1181,71 @@ useEffect(() => {
         <Analytics selectedProfileId={selectedProfileId} profiles={profiles} />
       </Suspense>
 
-      {/* Footer */}
-      <div style={{ marginTop: 'clamp(24px, 6vw, 40px)', borderTop: '1px solid #e5e7eb', backgroundColor: 'rgba(255,255,255,0.5)', padding: 'clamp(12px, 4vw, 16px)' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, fontSize: 'clamp(12px, 3vw, 14px)', color: '#6b7280', flexWrap: 'wrap', textAlign: 'center' }}>
-          <div style={{ position: 'relative', width: 24, height: 24, borderRadius: 6, overflow: 'hidden', flex: '0 0 24px' }}>
-            {/* Fallback */}
-            <svg width="24" height="24" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
-              <rect width="36" height="36" rx="6" fill={`url(#footerLogoGradient${theme})`}/>
-              <path d="M18 10L20.5 14.5L26 17L20.5 19.5L18 24L15.5 19.5L10 17L15.5 14.5L18 10Z" fill="white" opacity="0.95"/>
-              <defs>
-                <linearGradient id={`footerLogoGradient${theme}`} x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                  <stop stopColor={isDark ? '#2563EB' : '#2563EB'}/>
-                  <stop offset="1" stopColor={isDark ? '#1D4ED8' : '#1D4ED8'}/>
-                </linearGradient>
-              </defs>
-            </svg>
-            {/* Provided PNG */}
-            <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-              <Image src="/logo_ihsaantrack.png" alt="IhsaanTrack logo" width={24} height={24} className="object-cover" onError={(e) => { try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {} }} />
+      {/* Footer - Enhanced */}
+      <div style={{ marginTop: 'clamp(32px, 6vw, 48px)', borderTop: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`, background: isDark ? 'linear-gradient(180deg, #0f172a, #0b1220)' : 'linear-gradient(180deg, #f8fafc, #ffffff)', padding: 'clamp(24px, 5vw, 32px)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          {/* Main Footer Content */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(20px, 4vw, 28px)', marginBottom: 'clamp(20px, 4vw, 24px)' }}>
+            {/* Brand Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
+                <div style={{ position: 'relative', width: 'clamp(40px, 8vw, 48px)', height: 'clamp(40px, 8vw, 48px)', borderRadius: '12px', overflow: 'hidden', flex: '0 0 auto', boxShadow: isDark ? '0 4px 12px rgba(33,136,80,0.3)' : '0 4px 12px rgba(33,136,80,0.2)' }}>
+                  <Image src="/logo_ihsaantrack.png" alt="IhsaanTrack logo - إحسان" width={48} height={48} style={{ objectFit: 'contain', width: '100%', height: '100%' }} priority />
+                </div>
+                <h2 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 800, margin: 0, color: textPrimary, letterSpacing: '-0.02em' }}>IhsaanTrack</h2>
+              </div>
+              <p style={{ margin: 0, fontSize: 'clamp(13px, 3vw, 15px)', color: textMuted, maxWidth: '600px', lineHeight: 1.6 }}>
+                &quot;Indeed, in the remembrance of Allah do hearts find rest.&quot; (Qur&apos;an 13:28)
+              </p>
+            </div>
+
+            {/* Quick Links & Info */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(20px, 4vw, 32px)', padding: 'clamp(16px, 3vw, 24px)', background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: '12px', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
+              {/* Navigation Links */}
+              <div>
+                <h3 style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, margin: '0 0 12px 0', color: textPrimary }}>Quick Links</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <a href="#rewards" style={{ fontSize: 'clamp(12px, 2.8vw, 14px)', color: textMuted, textDecoration: 'none', transition: 'color 0.2s ease' }}>🏅 Rewards</a>
+                  <a href="#my-tracker" style={{ fontSize: 'clamp(12px, 2.8vw, 14px)', color: textMuted, textDecoration: 'none', transition: 'color 0.2s ease' }}>📊 My Tracker</a>
+                  <a href="#tasks" style={{ fontSize: 'clamp(12px, 2.8vw, 14px)', color: textMuted, textDecoration: 'none', transition: 'color 0.2s ease' }}>✅ Tasks</a>
+                  <a href="#friends" style={{ fontSize: 'clamp(12px, 2.8vw, 14px)', color: textMuted, textDecoration: 'none', transition: 'color 0.2s ease' }}>👥 Friends</a>
+                </div>
+              </div>
+
+              {/* App Info */}
+              <div>
+                <h3 style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, margin: '0 0 12px 0', color: textPrimary }}>About</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: 'clamp(12px, 2.8vw, 14px)', color: textMuted }}>
+                  <div>📱 Track your daily deen</div>
+                  <div>👥 Stay connected with friends</div>
+                  <div>📊 View progress & analytics</div>
+                  <div>💾 Data stored securely</div>
+                </div>
+              </div>
+
+              {/* Status & Data */}
+              <div>
+                <h3 style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, margin: '0 0 12px 0', color: textPrimary }}>Status</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: 'clamp(12px, 2.8vw, 14px)', color: textMuted }}>
+                  <div>✓ Database: Connected</div>
+                  <div>✓ Last updated: {new Date().toLocaleDateString()}</div>
+                  <div>✓ Version: {new Date().getFullYear()}</div>
+                </div>
+              </div>
             </div>
           </div>
-          <p style={{ margin: 0 }}>Data stored permanently in database — {new Date().toDateString()}</p>
-        </div>
-        <div style={{ marginTop: 8, fontSize: 'clamp(11px, 2.5vw, 13px)', color: '#475569', display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: 12, textAlign: 'center' }}>
-          <span>Developed by <strong>oja673</strong> by the grace of Almighty Allah</span>
+
+          {/* Bottom Bar - Copyright & Credits */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', paddingTop: 'clamp(16px, 3vw, 20px)', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
+            <div style={{ fontSize: 'clamp(12px, 2.8vw, 14px)', color: textMuted, textAlign: 'center', lineHeight: 1.6 }}>
+              <p style={{ margin: '0 0 8px 0' }}>
+                Developed by <strong style={{ color: textPrimary }}>oja673</strong> by the grace of Almighty Allah
+              </p>
+              <p style={{ margin: 0, fontSize: 'clamp(11px, 2.5vw, 12px)', color: isDark ? '#64748b' : '#94a3b8' }}>
+                © {new Date().getFullYear()} IhsaanTrack. All rights reserved.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

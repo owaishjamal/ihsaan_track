@@ -75,16 +75,31 @@ export async function GET(request: NextRequest) {
 async function fetchPrayerTimesFromAPI(lat: number, lon: number, date: string) {
   try {
     // Using Aladhan API (free Islamic prayer times API)
-    const response = await fetch(
-      `http://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lon}&method=4&school=1`
-    );
+    // Use HTTPS for better security
+    const apiUrl = `https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lon}&method=4&school=1`;
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
     
     if (!response.ok) {
-      throw new Error('Failed to fetch prayer times from external API');
+      throw new Error(`Aladhan API error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    
+    // Validate response structure
+    if (!data || !data.data || !data.data.timings) {
+      throw new Error('Invalid response structure from prayer times API');
+    }
+    
     const timings = data.data.timings;
+    
+    // Validate that we have all required prayer times
+    if (!timings.Fajr || !timings.Dhuhr || !timings.Asr || !timings.Maghrib || !timings.Isha) {
+      throw new Error('Missing prayer times in API response');
+    }
     
     return {
       fajr: timings.Fajr,
