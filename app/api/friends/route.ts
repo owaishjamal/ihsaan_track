@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
 
       // Get all related profiles
       if (allRequests && allRequests.length > 0) {
-        const allUserIds = [...new Set(allRequests.flatMap(req => [req.requester_id, req.receiver_id]))];
+        const allUserIds = Array.from(new Set(allRequests.flatMap(req => [req.requester_id, req.receiver_id])));
         const allUserIdsArray = allUserIds.length > 0 ? allUserIds : ['00000000-0000-0000-0000-000000000000'];
         const { data: allProfiles } = await supa
           .from('profiles')
