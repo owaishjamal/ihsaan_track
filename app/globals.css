@@ -146,3 +146,86 @@ tr:hover td[role="cell-hover"], tr:hover th[role="cell-hover"] {
   width: 100%;
   height: 100%;
 }
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Mobile-first responsive breakpoints */
+@media (max-width: 768px) {
+  /* Touch-friendly buttons */
+  button, a[role="button"], input[type="button"] {
+    min-height: 44px; /* iOS touch target minimum */
+    min-width: 44px;
+    touch-action: manipulation; /* Prevent double-tap zoom on buttons */
+  }
+
+  /* Quote marquee - smaller on mobile */
+  .quote-item {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Mobile navigation - stack vertically */
+  .mobile-nav-stack {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* Hide some elements on mobile if needed */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Prevent text size adjustment on iOS for date inputs */
+  input[type="date"], input[type="time"] {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small devices */
+  h1 {
+    font-size: 18px !important;
+  }
+
+  .quote-item {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* Table responsive wrapper utility */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+/* Mobile-friendly grid - stacks on mobile */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Mobile-friendly flex - wraps on mobile */
+.responsive-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .responsive-flex {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

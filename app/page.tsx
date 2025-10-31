@@ -403,15 +403,16 @@ useEffect(() => {
   const textPrimary = isDark ? '#e2e8f0' : '#0f172a';
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: pageBg, padding: '20px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: pageBg, padding: 'clamp(12px, 4vw, 20px)' }}>
       {/* Header */}
-      <div className="card-hover" style={{ position: 'sticky', top: 0, zIndex: 30, background: cardBgGrad, padding: '20px', marginBottom: '20px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(2,6,23,0.12)', border: `1px solid ${cardBorder}` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="card-hover" style={{ position: 'sticky', top: 0, zIndex: 30, background: cardBgGrad, padding: 'clamp(12px, 3vw, 20px)', marginBottom: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', boxShadow: '0 8px 24px rgba(2,6,23,0.12)', border: `1px solid ${cardBorder}` }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Logo and Title Section */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ position: 'relative', width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flex: '0 0 36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <div style={{ position: 'relative', width: 'clamp(32px, 8vw, 36px)', height: 'clamp(32px, 8vw, 36px)', borderRadius: 8, overflow: 'hidden', flex: '0 0 auto' }}>
                 {/* Fallback SVG (always present) */}
-                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', width: '100%', height: '100%' }}>
                   <rect width="36" height="36" rx="8" fill={`url(#logoGradient${theme})`}/>
                   <path d="M18 10L20.5 14.5L26 17L20.5 19.5L18 24L15.5 19.5L10 17L15.5 14.5L18 10Z" fill="white" opacity="0.95"/>
                   <defs>
@@ -426,57 +427,64 @@ useEffect(() => {
                   <Image src="/logo_ihsaantrack.png" alt="IhsaanTrack logo" width={36} height={36} className="object-cover" priority onError={(e) => { try { (e.currentTarget as HTMLImageElement).style.display = 'none'; } catch {} }} />
                 </div>
               </div>
-              <h1 className="heading-accent" style={{ fontSize: '26px', fontWeight: 800, margin: 0, marginBottom: '10px', color: textPrimary, display: 'inline-block' }}>IhsaanTrack</h1>
+              <h1 className="heading-accent" style={{ fontSize: 'clamp(20px, 5vw, 26px)', fontWeight: 800, margin: 0, color: textPrimary }}>IhsaanTrack</h1>
             </div>
-            <p style={{ margin: '6px 0 0 0', color: textMuted, fontSize: '14px' }}>{headerQuote}</p>
+            <p style={{ margin: '6px 0 0 0', color: textMuted, fontSize: 'clamp(12px, 3vw, 14px)' }}>{headerQuote}</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <a href="#rewards" style={{ padding: '8px 12px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Jump to Rewards">Rewards</a>
-              <a href="#my-tracker" style={{ padding: '8px 12px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Jump to My Tracker">My Tracker</a>
-              <a href="#tasks" style={{ padding: '8px 12px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Jump to Tasks">Tasks</a>
-              <a href="#others" style={{ padding: '8px 12px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Jump to Others">Others</a>
+
+          {/* Navigation and Controls - Responsive */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Mobile Navigation - Compact */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <a href="#rewards" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Rewards">Rewards</a>
+              <a href="#my-tracker" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="My Tracker">My Tracker</a>
+              <a href="#tasks" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Tasks">Tasks</a>
+              <a href="#others" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }} aria-label="Others">Others</a>
             </div>
-            <button 
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              title="Toggle theme"
-              style={{ padding: '8px 12px', background: isDark ? '#0f172a' : '#f8fafc', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, cursor: 'pointer' }}>
-              {isDark ? '🌙 Dark' : '☀️ Light'}
-            </button>
-            <input
-              type="date"
-              value={currentDate}
-              onChange={(e) => setCurrentDate(e.target.value)}
-              style={{ padding: '8px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, background: isDark ? '#0f172a' : '#ffffff', color: textPrimary, borderRadius: '8px' }}
-            />
-            <button 
-              onClick={() => setCurrentDate(new Date().toISOString().split('T')[0])}
-              style={{ padding: '8px 16px', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer' }}
-            >
-              Today
-            </button>
-            <button
-              onClick={exportData}
-              style={{ padding: '8px 16px', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer' }}
-            >
-              Export
-            </button>
-            {!userEmail ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <a href="/login" style={{ padding: '8px 12px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc' }}>Login</a>
-                <a href="/signup" style={{ padding: '8px 12px', border: '1px solid var(--primary)', borderRadius: '8px', textDecoration: 'none', color: 'white', background: 'var(--primary)' }}>Sign up</a>
-          </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: textMuted }}>{userEmail}</span>
-                <button
-                  onClick={async () => { await supabase.auth.signOut(); window.location.reload(); }}
-                  style={{ padding: '8px 12px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer', background: isDark ? '#0f172a' : '#f8fafc', color: textPrimary }}
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+
+            {/* Controls Row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <button 
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                title="Toggle theme"
+                style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', background: isDark ? '#0f172a' : '#f8fafc', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: 8, cursor: 'pointer', minHeight: '36px' }}>
+                {isDark ? '🌙' : '☀️'}
+              </button>
+              <input
+                type="date"
+                value={currentDate}
+                onChange={(e) => setCurrentDate(e.target.value)}
+                style={{ padding: '8px', fontSize: 'clamp(12px, 3vw, 14px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, background: isDark ? '#0f172a' : '#ffffff', color: textPrimary, borderRadius: '8px', minHeight: '36px', flex: '1 1 140px' }}
+              />
+              <button 
+                onClick={() => setCurrentDate(new Date().toISOString().split('T')[0])}
+                style={{ padding: '8px 12px', fontSize: 'clamp(11px, 2.5vw, 13px)', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer', minHeight: '36px' }}
+              >
+                Today
+              </button>
+              <button
+                onClick={exportData}
+                style={{ padding: '8px 12px', fontSize: 'clamp(11px, 2.5vw, 13px)', backgroundColor: isDark ? '#0f172a' : '#f1f5f9', color: textPrimary, border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer', minHeight: '36px' }}
+              >
+                Export
+              </button>
+              {!userEmail ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <a href="/login" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, background: isDark ? '#0f172a' : '#f8fafc', minHeight: '36px', display: 'flex', alignItems: 'center' }}>Login</a>
+                  <a href="/signup" style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: '1px solid var(--primary)', borderRadius: '8px', textDecoration: 'none', color: 'white', background: 'var(--primary)', minHeight: '36px', display: 'flex', alignItems: 'center' }}>Sign up</a>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>
+                  <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>{userEmail}</span>
+                  <button
+                    onClick={async () => { await supabase.auth.signOut(); window.location.reload(); }}
+                    style={{ padding: '8px 10px', fontSize: 'clamp(11px, 2.5vw, 13px)', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, borderRadius: '8px', cursor: 'pointer', background: isDark ? '#0f172a' : '#f8fafc', color: textPrimary, minHeight: '36px' }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         {/* Sliding Quotes */}
@@ -513,22 +521,23 @@ useEffect(() => {
         myProfile ? (
           <div id="my-tracker" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', marginBottom: '16px' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>My Tracker</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
               <thead style={{ backgroundColor: '#f9fafb' }}>
                 <tr>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Person</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Fajr</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Dhuhr</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Asr</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Maghrib</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Isha</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Morning Dhikr</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Evening Dhikr</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Tahajjud</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Yā-Sīn after Fajr</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Mulk before Sleep</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Before sleep Dhikr</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Istighfar</th>
+                  <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>Person</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Fajr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Dhuhr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Asr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Maghrib</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Isha</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Morning Dhikr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Evening Dhikr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Tahajjud</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Yā-Sīn</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Mulk</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Before sleep</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Istighfar</th>
                 </tr>
               </thead>
               <tbody>
@@ -538,19 +547,19 @@ useEffect(() => {
                   const fields = ['fajr','dhuhr','asr','maghrib','isha','morning_dhikr','evening_dhikr','tahajjud','yaseen_after_fajr','mulk_before_sleep','before_sleep_dhikr'];
                   return (
                     <tr key={profile.id} style={{ borderBottom: '1px solid #e5e7eb', background: '#ffffff' }}>
-                      <td style={{ padding: '16px', fontWeight: '500' }}>{profile.name}</td>
+                      <td style={{ padding: 'clamp(10px, 3vw, 16px)', fontWeight: '500', fontSize: 'clamp(12px, 3vw, 14px)' }}>{profile.name}</td>
                       {fields.map((f) => (
-                        <td key={f} role="cell-hover" style={{ padding: '12px', textAlign: 'center' }}>
-                          <button aria-label={`Toggle ${f}`} onClick={() => toggleField(profile.id, f)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry[f] ? '#dcfce7' : '#f9fafb', color: entry[f] ? '#166534' : '#374151', cursor: 'pointer' }}>{entry[f] ? '✓' : '—'}</button>
+                        <td key={f} role="cell-hover" style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                          <button aria-label={`Toggle ${f}`} onClick={() => toggleField(profile.id, f)} style={{ padding: 'clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px)', fontSize: 'clamp(11px, 2.5vw, 13px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry[f] ? '#dcfce7' : '#f9fafb', color: entry[f] ? '#166534' : '#374151', cursor: 'pointer', minHeight: '32px', minWidth: '32px' }}>{entry[f] ? '✓' : '—'}</button>
                         </td>
                       ))}
-                      <td role="cell-hover" style={{ padding: '12px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <button onClick={() => updateCount(profile.id, -10)} style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>−10</button>
-                          <button onClick={() => updateCount(profile.id, -1)} style={{ padding: '4px 8px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>−</button>
-                          <input type="number" value={entry.istighfar_count || 0} onChange={(e) => { const v = parseInt(e.target.value) || 0; updateCount(profile.id, v - (entry.istighfar_count || 0)); }} style={{ width: '60px', padding: '4px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px' }} />
-                          <button onClick={() => updateCount(profile.id, 1)} style={{ padding: '4px 8px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>+</button>
-                          <button onClick={() => updateCount(profile.id, 10)} style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>+10</button>
+                      <td role="cell-hover" style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(3px, 1vw, 4px)', flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <button onClick={() => updateCount(profile.id, -10)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', fontSize: 'clamp(10px, 2.5vw, 12px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px' }}>−10</button>
+                          <button onClick={() => updateCount(profile.id, -1)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px', minWidth: '32px' }}>−</button>
+                          <input type="number" value={entry.istighfar_count || 0} onChange={(e) => { const v = parseInt(e.target.value) || 0; updateCount(profile.id, v - (entry.istighfar_count || 0)); }} style={{ width: 'clamp(50px, 12vw, 60px)', padding: 'clamp(4px, 1vw, 6px)', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: 'clamp(11px, 2.5vw, 13px)', minHeight: '32px' }} />
+                          <button onClick={() => updateCount(profile.id, 1)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px', minWidth: '32px' }}>+</button>
+                          <button onClick={() => updateCount(profile.id, 10)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', fontSize: 'clamp(10px, 2.5vw, 12px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px' }}>+10</button>
                         </div>
                       </td>
                     </tr>
@@ -558,9 +567,10 @@ useEffect(() => {
                 })()}
               </tbody>
             </table>
+            </div>
           </div>
         ) : (
-          <div className="card-hover" style={{ backgroundColor: 'white', padding: '16px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
+          <div className="card-hover" style={{ backgroundColor: 'white', padding: 'clamp(12px, 4vw, 16px)', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Create your tracker</div>
             <div style={{ color: '#6b7280', fontSize: 14, marginBottom: 12 }}>You don’t have a personal tracker yet. Create one to start tracking your progress.</div>
             <button onClick={createMyTracker} style={{ padding: '8px 12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Create my tracker</button>
@@ -572,23 +582,24 @@ useEffect(() => {
       {/* Others' Progress (read-only) */}
       <div id="others" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
         <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600 }}>Others&apos; Progress</div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
           <thead style={{ backgroundColor: '#f9fafb' }}>
             <tr>
-              <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600' }}>Person</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Badge</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Fajr</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Dhuhr</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Asr</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Maghrib</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Isha</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Morning Dhikr</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Evening Dhikr</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Tahajjud</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Yā-Sīn after Fajr</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Mulk before Sleep</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Before sleep Dhikr</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontWeight: '500' }}>Istighfar</th>
+              <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>Person</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Badge</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Fajr</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Dhuhr</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Asr</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Maghrib</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Isha</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Morning Dhikr</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Evening Dhikr</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Tahajjud</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Yā-Sīn</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Mulk</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Before sleep</th>
+              <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Istighfar</th>
             </tr>
           </thead>
           <tbody>
@@ -596,95 +607,97 @@ useEffect(() => {
               const entry = entries[`${profile.id}-${currentDate}`] || {};
               return (
                 <tr key={profile.id} style={{ borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                  <td style={{ padding: '16px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span aria-hidden style={{ width: 28, height: 28, borderRadius: '50%', background: '#e5e7eb', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                  <td style={{ padding: 'clamp(10px, 3vw, 16px)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: 8, fontSize: 'clamp(12px, 3vw, 14px)' }}>
+                    <span aria-hidden style={{ width: 'clamp(24px, 6vw, 28px)', height: 'clamp(24px, 6vw, 28px)', borderRadius: '50%', background: '#e5e7eb', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'clamp(11px, 2.5vw, 13px)' }}>
                       {profile.name?.[0]?.toUpperCase() || 'P'}
                     </span>
                     {profile.name}
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <span style={{ padding: '4px 8px', borderRadius: 999, border: '1px solid #e5e7eb', fontSize: 12, background: '#f8fafc' }}>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <span style={{ padding: 'clamp(3px, 1vw, 4px) clamp(6px, 1.5vw, 8px)', borderRadius: 999, border: '1px solid #e5e7eb', fontSize: 'clamp(10px, 2.5vw, 12px)', background: '#f8fafc' }}>
                       {badgesByProfile[profile.id]?.label || '—'}
                     </span>
                   </td>
-                  <td role="cell-hover" style={{ padding: '12px', textAlign: 'center' }}><div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.fajr ? '#dcfce7' : '#f9fafb', color: entry.fajr ? '#166534' : '#374151' }}>{entry.fajr ? '✓' : '—'}</div></td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.dhuhr ? '#dcfce7' : '#f9fafb', color: entry.dhuhr ? '#166534' : '#374151' }}>{entry.dhuhr ? '✓' : '—'}</div>
+                  <td role="cell-hover" style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}><div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.fajr ? '#dcfce7' : '#f9fafb', color: entry.fajr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.fajr ? '✓' : '—'}</div></td>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.dhuhr ? '#dcfce7' : '#f9fafb', color: entry.dhuhr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.dhuhr ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.asr ? '#dcfce7' : '#f9fafb', color: entry.asr ? '#166534' : '#374151' }}>{entry.asr ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.asr ? '#dcfce7' : '#f9fafb', color: entry.asr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.asr ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.maghrib ? '#dcfce7' : '#f9fafb', color: entry.maghrib ? '#166534' : '#374151' }}>{entry.maghrib ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.maghrib ? '#dcfce7' : '#f9fafb', color: entry.maghrib ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.maghrib ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.isha ? '#dcfce7' : '#f9fafb', color: entry.isha ? '#166534' : '#374151' }}>{entry.isha ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.isha ? '#dcfce7' : '#f9fafb', color: entry.isha ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.isha ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.morning_dhikr ? '#dcfce7' : '#f9fafb', color: entry.morning_dhikr ? '#166534' : '#374151' }}>{entry.morning_dhikr ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.morning_dhikr ? '#dcfce7' : '#f9fafb', color: entry.morning_dhikr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.morning_dhikr ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.evening_dhikr ? '#dcfce7' : '#f9fafb', color: entry.evening_dhikr ? '#166534' : '#374151' }}>{entry.evening_dhikr ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.evening_dhikr ? '#dcfce7' : '#f9fafb', color: entry.evening_dhikr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.evening_dhikr ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.tahajjud ? '#dcfce7' : '#f9fafb', color: entry.tahajjud ? '#166534' : '#374151' }}>{entry.tahajjud ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.tahajjud ? '#dcfce7' : '#f9fafb', color: entry.tahajjud ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.tahajjud ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.yaseen_after_fajr ? '#dcfce7' : '#f9fafb', color: entry.yaseen_after_fajr ? '#166534' : '#374151' }}>{entry.yaseen_after_fajr ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.yaseen_after_fajr ? '#dcfce7' : '#f9fafb', color: entry.yaseen_after_fajr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.yaseen_after_fajr ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.mulk_before_sleep ? '#dcfce7' : '#f9fafb', color: entry.mulk_before_sleep ? '#166534' : '#374151' }}>{entry.mulk_before_sleep ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.mulk_before_sleep ? '#dcfce7' : '#f9fafb', color: entry.mulk_before_sleep ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.mulk_before_sleep ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.before_sleep_dhikr ? '#dcfce7' : '#f9fafb', color: entry.before_sleep_dhikr ? '#166534' : '#374151' }}>{entry.before_sleep_dhikr ? '✓' : '—'}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.before_sleep_dhikr ? '#dcfce7' : '#f9fafb', color: entry.before_sleep_dhikr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.before_sleep_dhikr ? '✓' : '—'}</div>
                   </td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6b7280' }}>{entry.istighfar_count || 0}</div>
+                  <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6b7280', fontSize: 'clamp(12px, 3vw, 14px)' }}>{entry.istighfar_count || 0}</div>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Dhikr & Dua Reference */}
-      <div className="card-hover" style={{ margin: '20px 0', backgroundColor: 'white', padding: 20, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <div style={{ fontWeight: 600, marginBottom: 10, fontSize: '18px' }}>Dhikr & Dua Reference</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-          <a href="https://lifewithallah.com/dhikr-dua/morning-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500 }}>🌅 Morning Adhkar</a>
-          <a href="https://lifewithallah.com/dhikr-dua/evening-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500 }}>🌇 Evening Adhkar</a>
-          <a href="https://lifewithallah.com/dhikr-dua/before-sleep/" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500 }}>😴 Before Sleep</a>
-          <a href="https://lifewithallah.com/dhikr-dua/after-salah/" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500 }}>🕌 After Salah</a>
-          <a href="https://lifewithallah.com/dhikr-dua/" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500 }}>📖 All Adhkar & Duas</a>
-          <a href="https://lifewithallah.com/dhikr-dua/quranic-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500 }}>🌿 Qur’anic Duas</a>
-          <a href="https://lifewithallah.com/dhikr-dua/sunnah-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500 }}>🌱 Sunnah Duas</a>
-          <a href="https://ia902908.us.archive.org/2/items/surahalmulkpdf/Surah_Al-Mulk_pdf.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500 }}>📄 Surah Al-Mulk (PDF)</a>
-          <a href="https://www.darsaal.com/islam/quran-pdf/arabic/32-Surah-Sajdah-in-Arabic.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500 }}>📄 Surah As-Sajdah (PDF)</a>
-          <a href="https://ia902903.us.archive.org/33/items/Surah-al-waqiah/mafiadoc.com_surah-al-waqiah-pdf-alkalampk_59fd6cec1723dd41187607ee.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500 }}>📄 Surah Al-Waqi’ah (PDF)</a>
-          <a href="https://masjideraza.com/wp-content/uploads/2019/04/Yaseen-Sharif.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500 }}>📄 Surah Ya-Sin (PDF)</a>
+      <div className="card-hover" style={{ margin: 'clamp(12px, 4vw, 20px) 0', backgroundColor: 'white', padding: 'clamp(12px, 4vw, 20px)', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 'clamp(16px, 4vw, 18px)' }}>Dhikr & Dua Reference</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(8px, 2vw, 12px)' }}>
+          <a href="https://lifewithallah.com/dhikr-dua/morning-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌅 Morning Adhkar</a>
+          <a href="https://lifewithallah.com/dhikr-dua/evening-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌇 Evening Adhkar</a>
+          <a href="https://lifewithallah.com/dhikr-dua/before-sleep/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>😴 Before Sleep</a>
+          <a href="https://lifewithallah.com/dhikr-dua/after-salah/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🕌 After Salah</a>
+          <a href="https://lifewithallah.com/dhikr-dua/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📖 All Adhkar & Duas</a>
+          <a href="https://lifewithallah.com/dhikr-dua/quranic-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌿 Qur'anic Duas</a>
+          <a href="https://lifewithallah.com/dhikr-dua/sunnah-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌱 Sunnah Duas</a>
+          <a href="https://ia902908.us.archive.org/2/items/surahalmulkpdf/Surah_Al-Mulk_pdf.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah Al-Mulk</a>
+          <a href="https://www.darsaal.com/islam/quran-pdf/arabic/32-Surah-Sajdah-in-Arabic.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah As-Sajdah</a>
+          <a href="https://ia902903.us.archive.org/33/items/Surah-al-waqiah/mafiadoc.com_surah-al-waqiah-pdf-alkalampk_59fd6cec1723dd41187607ee.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah Al-Waqi&apos;ah</a>
+          <a href="https://masjideraza.com/wp-content/uploads/2019/04/Yaseen-Sharif.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah Ya-Sin</a>
         </div>
       </div>
 
       {/* Weekly Summary */}
-      <div className="card-hover" style={{ marginTop: '20px', backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div className="card-hover" style={{ marginTop: 'clamp(12px, 4vw, 20px)', backgroundColor: 'white', padding: 'clamp(12px, 4vw, 20px)', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', margin: 0, marginBottom: '4px' }}>Weekly Summary</h2>
-            <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Individual progress over the last 7 days</p>
+            <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '4px' }}>Weekly Summary</h2>
+            <p style={{ margin: 0, color: '#6b7280', fontSize: 'clamp(12px, 3vw, 14px)' }}>Individual progress over the last 7 days</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>Select Person:</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '500', color: '#374151' }}>Select Person:</label>
             <select
               value={selectedProfileId}
               onChange={(e) => setSelectedProfileId(e.target.value)}
               style={{ 
-                padding: '8px 12px', 
+                padding: 'clamp(8px, 2vw, 10px) clamp(10px, 3vw, 12px)', 
                 border: '1px solid #d1d5db', 
                 borderRadius: '6px', 
                 backgroundColor: 'white',
-                fontSize: '14px',
-                minWidth: '120px'
+                fontSize: 'clamp(12px, 3vw, 14px)',
+                minHeight: '36px',
+                width: '100%'
               }}
             >
               {profiles.map(profile => (
@@ -698,34 +711,34 @@ useEffect(() => {
         
         {selectedProfileId && (
           <>
-            <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+            <div style={{ marginBottom: '16px', padding: 'clamp(10px, 3vw, 12px)', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: 'clamp(14px, 3.5vw, 16px)', fontWeight: '600', color: '#1e293b' }}>
                 {profiles.find(p => p.id === selectedProfileId)?.name}&apos;s Progress
               </div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+              <div style={{ fontSize: 'clamp(11px, 2.5vw, 12px)', color: '#64748b', marginTop: '2px' }}>
                 Last 7 days from {new Date(new Date(currentDate).getTime() - 6 * 24 * 60 * 60 * 1000).toLocaleDateString()} to {new Date(currentDate).toLocaleDateString()}
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'clamp(12px, 4vw, 24px)' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{progress.completion}%</div>
-                <div style={{ fontSize: '14px', color: '#6b7280' }}>Completion</div>
-                <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>
+                <div style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 'bold' }}>{progress.completion}%</div>
+                <div style={{ fontSize: 'clamp(12px, 3vw, 14px)', color: '#6b7280' }}>Completion</div>
+                <div style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#9ca3af', marginTop: '2px' }}>
                   {Math.round((progress.completion / 100) * 77)}/77 activities
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{progress.onTime}%</div>
-                <div style={{ fontSize: '14px', color: '#6b7280' }}>On Time</div>
-                <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>
+                <div style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 'bold' }}>{progress.onTime}%</div>
+                <div style={{ fontSize: 'clamp(12px, 3vw, 14px)', color: '#6b7280' }}>On Time</div>
+                <div style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#9ca3af', marginTop: '2px' }}>
                   Estimated based on completion
                 </div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>{progress.istighfar}</div>
-                <div style={{ fontSize: '14px', color: '#6b7280' }}>Istighfar (7d)</div>
-                <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>
+                <div style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 'bold', color: '#16a34a' }}>{progress.istighfar}</div>
+                <div style={{ fontSize: 'clamp(12px, 3vw, 14px)', color: '#6b7280' }}>Istighfar (7d)</div>
+                <div style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#9ca3af', marginTop: '2px' }}>
                   {Math.round(progress.istighfar / 7)} avg/day
                 </div>
               </div>
@@ -736,8 +749,8 @@ useEffect(() => {
 
       {/* Tasks of the Day - visible only when logged in */}
       {userId && (
-      <div id="tasks" className="card-hover" style={{ marginTop: '20px', backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '600', margin: 0, marginBottom: '16px' }}>Tasks of the Day</h2>
+      <div id="tasks" className="card-hover" style={{ marginTop: 'clamp(12px, 4vw, 20px)', backgroundColor: 'white', padding: 'clamp(12px, 4vw, 20px)', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '16px' }}>Tasks of the Day</h2>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <Input value={newTask} onChange={e => setNewTask((e.target as HTMLInputElement).value)} placeholder="Add any task or goal" style={{ flex: 1 }} onKeyDown={e => e.key === 'Enter' && addTask()} aria-label="New task" />
           <Button onClick={addTask} variant="primary" aria-label="Add task">Add</Button>
@@ -769,8 +782,8 @@ useEffect(() => {
       </Suspense>
 
       {/* Footer */}
-      <div style={{ marginTop: '40px', borderTop: '1px solid #e5e7eb', backgroundColor: 'rgba(255,255,255,0.5)', padding: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, fontSize: '14px', color: '#6b7280', flexWrap: 'wrap', textAlign: 'center' }}>
+      <div style={{ marginTop: 'clamp(24px, 6vw, 40px)', borderTop: '1px solid #e5e7eb', backgroundColor: 'rgba(255,255,255,0.5)', padding: 'clamp(12px, 4vw, 16px)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, fontSize: 'clamp(12px, 3vw, 14px)', color: '#6b7280', flexWrap: 'wrap', textAlign: 'center' }}>
           <div style={{ position: 'relative', width: 24, height: 24, borderRadius: 6, overflow: 'hidden', flex: '0 0 24px' }}>
             {/* Fallback */}
             <svg width="24" height="24" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
@@ -790,7 +803,7 @@ useEffect(() => {
           </div>
           <p style={{ margin: 0 }}>Data stored permanently in database — {new Date().toDateString()}</p>
         </div>
-        <div style={{ marginTop: 8, fontSize: '13px', color: '#475569', display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: 12, textAlign: 'center' }}>
+        <div style={{ marginTop: 8, fontSize: 'clamp(11px, 2.5vw, 13px)', color: '#475569', display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: 12, textAlign: 'center' }}>
           <span>Developed by <strong>oja673</strong> by the grace of Almighty Allah</span>
         </div>
       </div>
