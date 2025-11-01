@@ -569,9 +569,11 @@ useEffect(() => {
             title="Toggle theme"
             style={{ 
               padding: 'clamp(10px, 3vw, 12px)', 
-              background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', 
+              background: isDark 
+                ? 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.08) 100%)' 
+                : 'linear-gradient(135deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.04) 100%)', 
               color: textPrimary, 
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, 
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'}`, 
               borderRadius: '12px', 
               cursor: 'pointer', 
               minHeight: '44px', 
@@ -580,11 +582,34 @@ useEffect(() => {
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 'clamp(18px, 4.5vw, 22px)',
-              transition: 'all 0.2s ease',
-              backdropFilter: 'blur(10px)'
+              transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: isDark 
+                ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)' 
+                : '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1) rotate(15deg)';
+              e.currentTarget.style.boxShadow = isDark
+                ? '0 4px 16px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.15)'
+                : '0 4px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+              e.currentTarget.style.boxShadow = isDark 
+                ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)' 
+                : '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8)';
             }}
           >
-            {isDark ? '🌙' : '☀️'}
+            <span style={{ 
+              display: 'inline-block',
+              transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+              filter: isDark ? 'drop-shadow(0 0 4px rgba(255,255,255,0.3))' : 'drop-shadow(0 2px 4px rgba(245,158,11,0.3))'
+            }}>
+              {isDark ? '🌙' : '☀️'}
+            </span>
           </button>
         </div>
 
@@ -755,15 +780,64 @@ useEffect(() => {
 
       {/* My Rewards Today - moved up */}
       {myProfile && (
-        <div id="rewards" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', marginBottom: '16px', border: '1px solid #e5e7eb' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
-            <span>Your badge for today</span>
-            <span>🏅</span>
+        <div id="rewards" className="card-hover fade-in-up" style={{ 
+          background: isDark 
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+            : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+          borderRadius: '12px', 
+          boxShadow: isDark 
+            ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' 
+            : '0 4px 20px rgba(2,6,23,0.1), inset 0 1px 0 rgba(255,255,255,0.8)', 
+          overflow: 'hidden', 
+          marginBottom: '20px', 
+          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          position: 'relative'
+        }}>
+          {badgesByProfile[myProfile.id]?.achieved && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '100px',
+              height: '100px',
+              background: 'radial-gradient(circle, rgba(245,158,11,0.2) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              animation: 'pulse 2s ease-in-out infinite'
+            }} />
+          )}
+          <div style={{ padding: '16px 20px', borderBottom: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: textPrimary, position: 'relative', zIndex: 1 }}>
+            <span style={{ fontSize: '14px', letterSpacing: '0.01em' }}>Your badge for today</span>
+            <span style={{ fontSize: '24px', filter: 'drop-shadow(0 2px 4px rgba(245,158,11,0.3))' }}>🏅</span>
           </div>
-          <div style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ fontWeight: 700 }}>{badgesByProfile[myProfile.id]?.label || '—'}</div>
+          <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 12, color: textPrimary, position: 'relative', zIndex: 1 }}>
+            <div style={{ 
+              fontWeight: 800, 
+              fontSize: '18px',
+              background: badgesByProfile[myProfile.id]?.achieved 
+                ? (isDark ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'linear-gradient(135deg, #f59e0b, #d97706)')
+                : 'transparent',
+              WebkitBackgroundClip: badgesByProfile[myProfile.id]?.achieved ? 'text' : 'unset',
+              WebkitTextFillColor: badgesByProfile[myProfile.id]?.achieved 
+                ? 'transparent' 
+                : (isDark ? '#e2e8f0' : '#0f172a'),
+              backgroundClip: badgesByProfile[myProfile.id]?.achieved ? 'text' : 'unset',
+              color: badgesByProfile[myProfile.id]?.achieved 
+                ? (isDark ? '#fbbf24' : '#f59e0b')
+                : (isDark ? '#e2e8f0' : '#0f172a')
+            }}>
+              {badgesByProfile[myProfile.id]?.label || '—'}
+            </div>
             {badgesByProfile[myProfile.id] && !badgesByProfile[myProfile.id].achieved && (
-              <div style={{ fontSize: 13, color: '#6b7280' }}>Do {badgesByProfile[myProfile.id].remaining} more today</div>
+              <div style={{ 
+                fontSize: 13, 
+                color: textMuted,
+                padding: '4px 10px',
+                borderRadius: '12px',
+                background: isDark ? 'rgba(100, 116, 139, 0.1)' : 'rgba(100, 116, 139, 0.08)',
+                border: `1px solid ${isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.15)'}`
+              }}>
+                {badgesByProfile[myProfile.id].remaining} more today
+              </div>
             )}
           </div>
         </div>
@@ -772,28 +846,70 @@ useEffect(() => {
       {/* My Tracker (editable) or create prompt */}
       {userId && (
         myProfile ? (
-          <div id="my-tracker" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', overflow: 'visible' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>My Tracker</span>
-              <span style={{ fontSize: '11px', color: '#6b7280', fontWeight: 400, display: 'none' }} className="mobile-scroll-hint">← Swipe →</span>
+          <div id="my-tracker" className="card-hover fade-in-up" style={{ 
+            background: isDark 
+              ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+              : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+            borderRadius: '12px', 
+            boxShadow: isDark 
+              ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' 
+              : '0 4px 20px rgba(2,6,23,0.1), inset 0 1px 0 rgba(255,255,255,0.8)', 
+            marginBottom: '20px', 
+            overflow: 'visible', 
+            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+            position: 'relative'
+          }}>
+            <div style={{ 
+              padding: '16px 20px', 
+              borderBottom: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, 
+              fontWeight: 600, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              color: textPrimary,
+              background: isDark 
+                ? 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, transparent 100%)'
+                : 'linear-gradient(135deg, rgba(59,130,246,0.04) 0%, transparent 100%)',
+              position: 'relative'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px', filter: 'drop-shadow(0 2px 4px rgba(59,130,246,0.3))' }}>📊</span>
+                <span style={{ fontSize: '16px', letterSpacing: '0.01em' }}>My Tracker</span>
+              </div>
+              <span style={{ fontSize: '11px', color: textMuted, fontWeight: 400, display: 'none' }} className="mobile-scroll-hint">← Swipe →</span>
             </div>
             <div className="table-responsive" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0, display: 'block', overflowX: 'scroll', overflowY: 'visible' }}>
             <table style={{ width: 'max-content', minWidth: '950px', borderCollapse: 'collapse' } as React.CSSProperties}>
-              <thead style={{ backgroundColor: '#f9fafb' }}>
+              <thead style={{ 
+                background: isDark 
+                  ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' 
+                  : 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
+                position: 'sticky',
+                top: 0,
+                zIndex: 10
+              }}>
                 <tr>
-                  <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>Person</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Fajr</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Dhuhr</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Asr</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Maghrib</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Isha</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Morning Dhikr</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Evening Dhikr</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Tahajjud</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Yā-Sīn</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Mulk</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Before sleep</th>
-                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Istighfar</th>
+                  <th style={{ 
+                    padding: 'clamp(12px, 3vw, 18px) clamp(10px, 3vw, 16px)', 
+                    textAlign: 'left', 
+                    fontWeight: '700', 
+                    fontSize: 'clamp(10px, 2.2vw, 12px)', 
+                    color: textPrimary,
+                    letterSpacing: '0.02em',
+                    textTransform: 'uppercase'
+                  }}>Person</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Fajr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Dhuhr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Asr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Maghrib</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Isha</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Morning Dhikr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Evening Dhikr</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Tahajjud</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Yā-Sīn</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Mulk</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Before sleep</th>
+                  <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Istighfar</th>
                 </tr>
               </thead>
               <tbody>
@@ -802,20 +918,60 @@ useEffect(() => {
                   const entry = entries[`${profile.id}-${currentDate}`] || {};
                   const fields = ['fajr','dhuhr','asr','maghrib','isha','morning_dhikr','evening_dhikr','tahajjud','yaseen_after_fajr','mulk_before_sleep','before_sleep_dhikr'];
                   return (
-                    <tr key={profile.id} style={{ borderBottom: '1px solid #e5e7eb', background: '#ffffff' }}>
-                      <td style={{ padding: 'clamp(10px, 3vw, 16px)', fontWeight: '500', fontSize: 'clamp(12px, 3vw, 14px)' }}>{profile.name}</td>
+                    <tr key={profile.id} style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`, background: isDark ? '#0f172a' : '#ffffff' }}>
+                      <td style={{ padding: 'clamp(10px, 3vw, 16px)', fontWeight: '500', fontSize: 'clamp(12px, 3vw, 14px)', color: textPrimary }}>{profile.name}</td>
                       {fields.map((f) => (
                         <td key={f} role="cell-hover" style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                          <button aria-label={`Toggle ${f}`} onClick={() => toggleField(profile.id, f)} style={{ padding: 'clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px)', fontSize: 'clamp(11px, 2.5vw, 13px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry[f] ? '#dcfce7' : '#f9fafb', color: entry[f] ? '#166534' : '#374151', cursor: 'pointer', minHeight: '32px', minWidth: '32px' }}>{entry[f] ? '✓' : '—'}</button>
+                          <button 
+                            aria-label={`Toggle ${f}`} 
+                            onClick={() => toggleField(profile.id, f)} 
+                            style={{ 
+                              padding: 'clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px)', 
+                              fontSize: 'clamp(11px, 2.5vw, 13px)', 
+                              borderRadius: '20px', 
+                              border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, 
+                              background: entry[f] 
+                                ? (isDark 
+                                  ? 'linear-gradient(135deg, rgba(34,197,94,0.25) 0%, rgba(34,197,94,0.15) 100%)' 
+                                  : 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)')
+                                : (isDark ? '#1e293b' : '#f9fafb'), 
+                              color: entry[f] ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), 
+                              cursor: 'pointer', 
+                              minHeight: '32px', 
+                              minWidth: '32px',
+                              fontWeight: entry[f] ? 600 : 400,
+                              boxShadow: entry[f] 
+                                ? (isDark ? '0 2px 8px rgba(34,197,94,0.2)' : '0 2px 8px rgba(34,197,94,0.15)')
+                                : 'none',
+                              transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                              position: 'relative',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            {entry[f] ? (
+                              <span style={{ position: 'relative', zIndex: 1, display: 'inline-block', transform: 'scale(1.1)' }}>✓</span>
+                            ) : (
+                              <span>—</span>
+                            )}
+                            {entry[f] && (
+                              <span style={{
+                                position: 'absolute',
+                                inset: 0,
+                                background: 'radial-gradient(circle, rgba(34,197,94,0.1) 0%, transparent 70%)',
+                                animation: 'pulse 2s ease-in-out infinite',
+                                pointerEvents: 'none'
+                              }} />
+                            )}
+                          </button>
                         </td>
                       ))}
                       <td role="cell-hover" style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(3px, 1vw, 4px)', flexWrap: 'wrap', justifyContent: 'center' }}>
-                          <button onClick={() => updateCount(profile.id, -10)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', fontSize: 'clamp(10px, 2.5vw, 12px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px' }}>−10</button>
-                          <button onClick={() => updateCount(profile.id, -1)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px', minWidth: '32px' }}>−</button>
-                          <input type="number" value={entry.istighfar_count || 0} onChange={(e) => { const v = parseInt(e.target.value) || 0; updateCount(profile.id, v - (entry.istighfar_count || 0)); }} style={{ width: 'clamp(50px, 12vw, 60px)', padding: 'clamp(4px, 1vw, 6px)', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: 'clamp(11px, 2.5vw, 13px)', minHeight: '32px' }} />
-                          <button onClick={() => updateCount(profile.id, 1)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px', minWidth: '32px' }}>+</button>
-                          <button onClick={() => updateCount(profile.id, 10)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', fontSize: 'clamp(10px, 2.5vw, 12px)', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', minHeight: '32px' }}>+10</button>
+                          <button onClick={() => updateCount(profile.id, -10)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', fontSize: 'clamp(10px, 2.5vw, 12px)', backgroundColor: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '4px', cursor: 'pointer', minHeight: '32px', color: textPrimary }}>−10</button>
+                          <button onClick={() => updateCount(profile.id, -1)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', backgroundColor: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '4px', cursor: 'pointer', minHeight: '32px', minWidth: '32px', color: textPrimary }}>−</button>
+                          <input type="number" value={entry.istighfar_count || 0} onChange={(e) => { const v = parseInt(e.target.value) || 0; updateCount(profile.id, v - (entry.istighfar_count || 0)); }} style={{ width: 'clamp(50px, 12vw, 60px)', padding: 'clamp(4px, 1vw, 6px)', textAlign: 'center', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '4px', fontSize: 'clamp(11px, 2.5vw, 13px)', minHeight: '32px', backgroundColor: isDark ? '#1e293b' : 'white', color: textPrimary }} />
+                          <button onClick={() => updateCount(profile.id, 1)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', backgroundColor: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '4px', cursor: 'pointer', minHeight: '32px', minWidth: '32px', color: textPrimary }}>+</button>
+                          <button onClick={() => updateCount(profile.id, 10)} style={{ padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px)', fontSize: 'clamp(10px, 2.5vw, 12px)', backgroundColor: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '4px', cursor: 'pointer', minHeight: '32px', color: textPrimary }}>+10</button>
                         </div>
                       </td>
                     </tr>
@@ -826,9 +982,9 @@ useEffect(() => {
             </div>
           </div>
         ) : (
-          <div className="card-hover" style={{ backgroundColor: 'white', padding: 'clamp(12px, 4vw, 16px)', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Create your tracker</div>
-            <div style={{ color: '#6b7280', fontSize: 14, marginBottom: 12 }}>You don’t have a personal tracker yet. Create one to start tracking your progress.</div>
+          <div className="card-hover" style={{ backgroundColor: isDark ? '#0f172a' : 'white', padding: 'clamp(12px, 4vw, 16px)', borderRadius: '8px', boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', border: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}>
+            <div style={{ fontWeight: 600, marginBottom: 8, color: textPrimary }}>Create your tracker</div>
+            <div style={{ color: textMuted, fontSize: 14, marginBottom: 12 }}>You don't have a personal tracker yet. Create one to start tracking your progress.</div>
             <button onClick={createMyTracker} style={{ padding: '8px 12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Create my tracker</button>
           </div>
         )
@@ -837,8 +993,8 @@ useEffect(() => {
 
       {/* Friends Management Section */}
       {userId && (
-        <div id="friends" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', overflow: 'visible' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setShowFriendsSection(!showFriendsSection)}>
+        <div id="friends" className="card-hover" style={{ backgroundColor: isDark ? '#0f172a' : 'white', borderRadius: '8px', boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', overflow: 'visible', border: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}>
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', color: textPrimary }} onClick={() => setShowFriendsSection(!showFriendsSection)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>👥 Friends & Requests</span>
               {(friendRequestsReceived.length > 0 || friendRequestsSent.length > 0) && (
@@ -855,16 +1011,16 @@ useEffect(() => {
               {/* Received Requests */}
               {friendRequestsReceived.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Friend Requests Received</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: textMuted }}>Friend Requests Received</div>
                   {friendRequestsReceived.map((req) => (
-                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: '#f9fafb', borderRadius: '8px', marginBottom: '8px' }}>
+                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: isDark ? '#1e293b' : '#f9fafb', borderRadius: '8px', marginBottom: '8px', border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                        <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                        <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: isDark ? '#334155' : '#e5e7eb', color: textPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
                           {req.requester?.name?.[0]?.toUpperCase() || '?'}
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.requester?.name || 'Unknown'}</div>
-                          <div style={{ fontSize: '12px', color: '#6b7280' }}>Wants to be friends</div>
+                          <div style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: textPrimary }}>{req.requester?.name || 'Unknown'}</div>
+                          <div style={{ fontSize: '12px', color: textMuted }}>Wants to be friends</div>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
@@ -879,16 +1035,16 @@ useEffect(() => {
               {/* Sent Requests */}
               {friendRequestsSent.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Friend Requests Sent</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: textMuted }}>Friend Requests Sent</div>
                   {friendRequestsSent.map((req) => (
-                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: '#f9fafb', borderRadius: '8px', marginBottom: '8px' }}>
+                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: isDark ? '#1e293b' : '#f9fafb', borderRadius: '8px', marginBottom: '8px', border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                        <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                        <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: isDark ? '#334155' : '#e5e7eb', color: textPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
                           {req.receiver?.name?.[0]?.toUpperCase() || '?'}
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.receiver?.name || 'Unknown'}</div>
-                          <div style={{ fontSize: '12px', color: '#6b7280' }}>Pending</div>
+                          <div style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: textPrimary }}>{req.receiver?.name || 'Unknown'}</div>
+                          <div style={{ fontSize: '12px', color: textMuted }}>Pending</div>
                         </div>
                       </div>
                       <button onClick={() => removeFriend(req.id)} style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
@@ -900,14 +1056,14 @@ useEffect(() => {
               {/* Current Friends */}
               {friends.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Friends ({friends.length})</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: textMuted }}>Friends ({friends.length})</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {friends.map((friend) => (
-                      <div key={friend.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', backgroundColor: '#f0f9ff', border: '1px solid #bfdbfe', borderRadius: '8px' }}>
+                      <div key={friend.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', backgroundColor: isDark ? 'rgba(59,130,246,0.1)' : '#f0f9ff', border: `1px solid ${isDark ? 'rgba(59,130,246,0.3)' : '#bfdbfe'}`, borderRadius: '8px' }}>
                         <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
                           {friend.friend_profile?.name?.[0]?.toUpperCase() || '?'}
                         </span>
-                        <span style={{ fontSize: '13px', fontWeight: 600 }}>{friend.friend_profile?.name || 'Unknown'}</span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: textPrimary }}>{friend.friend_profile?.name || 'Unknown'}</span>
                         <button onClick={() => removeFriend(friend.id)} style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginLeft: '4px' }} title="Remove friend">✕</button>
                       </div>
                     ))}
@@ -918,17 +1074,17 @@ useEffect(() => {
               {/* Send Friend Request */}
               {otherProfilesForRequests.length > 0 && (
                 <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#6b7280' }}>Add Friends</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: textMuted }}>Add Friends</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
                     {otherProfilesForRequests.map((profile) => {
                       const hasPendingRequest = friendRequestsSent.some(req => req.receiver_id === profile.user_id);
                       return (
-                        <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                        <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', backgroundColor: isDark ? '#1e293b' : '#f9fafb', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}` }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                            <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                            <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: isDark ? '#334155' : '#e5e7eb', color: textPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
                               {profile.name[0]?.toUpperCase() || '?'}
                             </span>
-                            <span style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.name}</span>
+                            <span style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: textPrimary }}>{profile.name}</span>
                           </div>
                           <button 
                             onClick={() => profile.user_id && sendFriendRequest(profile.user_id)} 
@@ -964,81 +1120,121 @@ useEffect(() => {
       )}
 
       {/* Friends' Progress (read-only) - Only shows accepted friends */}
-      <div id="others" className="card-hover" style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'visible' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>Friends&apos; Progress {friendsProfiles.length > 0 && `(${friendsProfiles.length})`}</span>
-          <span style={{ fontSize: '11px', color: '#6b7280', fontWeight: 400, display: 'none' }} className="mobile-scroll-hint">← Swipe →</span>
+      <div id="others" className="card-hover fade-in-up" style={{ 
+        background: isDark 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+        borderRadius: '12px', 
+        boxShadow: isDark 
+          ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' 
+          : '0 4px 20px rgba(2,6,23,0.1), inset 0 1px 0 rgba(255,255,255,0.8)', 
+        overflow: 'visible', 
+        border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+        marginBottom: '20px',
+        position: 'relative'
+      }}>
+        <div style={{ 
+          padding: '16px 20px', 
+          borderBottom: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, 
+          fontWeight: 600, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          color: textPrimary,
+          background: isDark 
+            ? 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, transparent 100%)'
+            : 'linear-gradient(135deg, rgba(139,92,246,0.04) 0%, transparent 100%)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '20px', filter: 'drop-shadow(0 2px 4px rgba(139,92,246,0.3))' }}>👥</span>
+            <span style={{ fontSize: '16px', letterSpacing: '0.01em' }}>
+              Friends&apos; Progress {friendsProfiles.length > 0 && (
+                <span style={{
+                  fontSize: '12px',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: isDark ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.1)',
+                  color: isDark ? '#c4b5fd' : '#7c3aed',
+                  fontWeight: 700,
+                  marginLeft: '8px'
+                }}>
+                  {friendsProfiles.length}
+                </span>
+              )}
+            </span>
+          </div>
+          <span style={{ fontSize: '11px', color: textMuted, fontWeight: 400, display: 'none' }} className="mobile-scroll-hint">← Swipe →</span>
         </div>
         {friendsProfiles.length > 0 ? (
           <div className="table-responsive" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0, display: 'block', overflowX: 'scroll', overflowY: 'visible' }}>
           <table style={{ width: 'max-content', minWidth: '1050px', borderCollapse: 'collapse' } as React.CSSProperties}>
-            <thead style={{ backgroundColor: '#f9fafb' }}>
+            <thead style={{ backgroundColor: isDark ? '#1e293b' : '#f9fafb' }}>
               <tr>
-                <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>Person</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Badge</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Fajr</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Dhuhr</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Asr</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Maghrib</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Isha</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Morning Dhikr</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Evening Dhikr</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Tahajjud</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Yā-Sīn</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Mulk</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Before sleep</th>
-                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)' }}>Istighfar</th>
+                <th style={{ padding: 'clamp(10px, 3vw, 16px)', textAlign: 'left', fontWeight: '600', fontSize: 'clamp(11px, 2.5vw, 13px)', color: textPrimary }}>Person</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Badge</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Fajr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Dhuhr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Asr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Maghrib</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Isha</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Morning Dhikr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Evening Dhikr</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Tahajjud</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Yā-Sīn</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Mulk</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Before sleep</th>
+                <th style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center', fontWeight: '500', fontSize: 'clamp(10px, 2.5vw, 12px)', color: textPrimary }}>Istighfar</th>
               </tr>
             </thead>
             <tbody>
               {(friendsProfiles).map((profile, idx) => {
               const entry = entries[`${profile.id}-${currentDate}`] || {};
               return (
-                <tr key={profile.id} style={{ borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                  <td style={{ padding: 'clamp(10px, 3vw, 16px)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: 8, fontSize: 'clamp(12px, 3vw, 14px)' }}>
-                    <span aria-hidden style={{ width: 'clamp(24px, 6vw, 28px)', height: 'clamp(24px, 6vw, 28px)', borderRadius: '50%', background: '#e5e7eb', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'clamp(11px, 2.5vw, 13px)' }}>
+                <tr key={profile.id} style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`, background: idx % 2 === 0 ? (isDark ? '#0f172a' : '#ffffff') : (isDark ? '#1e293b' : '#f9fafb') }}>
+                  <td style={{ padding: 'clamp(10px, 3vw, 16px)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: 8, fontSize: 'clamp(12px, 3vw, 14px)', color: textPrimary }}>
+                    <span aria-hidden style={{ width: 'clamp(24px, 6vw, 28px)', height: 'clamp(24px, 6vw, 28px)', borderRadius: '50%', background: isDark ? '#334155' : '#e5e7eb', color: textPrimary, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'clamp(11px, 2.5vw, 13px)' }}>
                       {profile.name?.[0]?.toUpperCase() || 'P'}
                     </span>
                     {profile.name}
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <span style={{ padding: 'clamp(3px, 1vw, 4px) clamp(6px, 1.5vw, 8px)', borderRadius: 999, border: '1px solid #e5e7eb', fontSize: 'clamp(10px, 2.5vw, 12px)', background: '#f8fafc' }}>
+                    <span style={{ padding: 'clamp(3px, 1vw, 4px) clamp(6px, 1.5vw, 8px)', borderRadius: 999, border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, fontSize: 'clamp(10px, 2.5vw, 12px)', background: isDark ? '#1e293b' : '#f8fafc', color: textPrimary }}>
                       {badgesByProfile[profile.id]?.label || '—'}
                     </span>
                   </td>
-                  <td role="cell-hover" style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}><div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.fajr ? '#dcfce7' : '#f9fafb', color: entry.fajr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.fajr ? '✓' : '—'}</div></td>
+                  <td role="cell-hover" style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}><div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.fajr ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.fajr ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.fajr ? '✓' : '—'}</div></td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.dhuhr ? '#dcfce7' : '#f9fafb', color: entry.dhuhr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.dhuhr ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.dhuhr ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.dhuhr ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.dhuhr ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.asr ? '#dcfce7' : '#f9fafb', color: entry.asr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.asr ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.asr ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.asr ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.asr ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.maghrib ? '#dcfce7' : '#f9fafb', color: entry.maghrib ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.maghrib ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.maghrib ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.maghrib ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.maghrib ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.isha ? '#dcfce7' : '#f9fafb', color: entry.isha ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.isha ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.isha ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.isha ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.isha ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.morning_dhikr ? '#dcfce7' : '#f9fafb', color: entry.morning_dhikr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.morning_dhikr ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.morning_dhikr ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.morning_dhikr ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.morning_dhikr ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.evening_dhikr ? '#dcfce7' : '#f9fafb', color: entry.evening_dhikr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.evening_dhikr ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.evening_dhikr ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.evening_dhikr ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.evening_dhikr ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.tahajjud ? '#dcfce7' : '#f9fafb', color: entry.tahajjud ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.tahajjud ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.tahajjud ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.tahajjud ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.tahajjud ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.yaseen_after_fajr ? '#dcfce7' : '#f9fafb', color: entry.yaseen_after_fajr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.yaseen_after_fajr ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.yaseen_after_fajr ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.yaseen_after_fajr ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.yaseen_after_fajr ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.mulk_before_sleep ? '#dcfce7' : '#f9fafb', color: entry.mulk_before_sleep ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.mulk_before_sleep ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.mulk_before_sleep ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.mulk_before_sleep ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.mulk_before_sleep ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: '1px solid #d1d5db', backgroundColor: entry.before_sleep_dhikr ? '#dcfce7' : '#f9fafb', color: entry.before_sleep_dhikr ? '#166534' : '#374151', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.before_sleep_dhikr ? '✓' : '—'}</div>
+                    <div style={{ padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', borderRadius: '20px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, backgroundColor: entry.before_sleep_dhikr ? (isDark ? 'rgba(34,197,94,0.2)' : '#dcfce7') : (isDark ? '#1e293b' : '#f9fafb'), color: entry.before_sleep_dhikr ? (isDark ? '#86efac' : '#166534') : (isDark ? '#cbd5e1' : '#374151'), fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{entry.before_sleep_dhikr ? '✓' : '—'}</div>
                   </td>
                   <td style={{ padding: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6b7280', fontSize: 'clamp(12px, 3vw, 14px)' }}>{entry.istighfar_count || 0}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: textMuted, fontSize: 'clamp(12px, 3vw, 14px)' }}>{entry.istighfar_count || 0}</div>
                   </td>
                 </tr>
               );
@@ -1055,40 +1251,63 @@ useEffect(() => {
       </div>
 
       {/* Dhikr & Dua Reference */}
-      <div className="card-hover" style={{ margin: 'clamp(12px, 4vw, 20px) 0', backgroundColor: 'white', padding: 'clamp(12px, 4vw, 20px)', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 'clamp(16px, 4vw, 18px)' }}>Dhikr & Dua Reference</div>
+      <div className="card-hover fade-in-up" style={{ 
+        margin: 'clamp(12px, 4vw, 20px) 0', 
+        background: isDark 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+        padding: 'clamp(12px, 4vw, 20px)', 
+        borderRadius: '12px', 
+        boxShadow: isDark 
+          ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' 
+          : '0 4px 20px rgba(2,6,23,0.1), inset 0 1px 0 rgba(255,255,255,0.8)', 
+        border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`
+      }}>
+        <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 'clamp(16px, 4vw, 18px)', color: textPrimary }}>Dhikr & Dua Reference</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(8px, 2vw, 12px)' }}>
-          <a href="https://lifewithallah.com/dhikr-dua/morning-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌅 Morning Adhkar</a>
-          <a href="https://lifewithallah.com/dhikr-dua/evening-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌇 Evening Adhkar</a>
-          <a href="https://lifewithallah.com/dhikr-dua/before-sleep/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>😴 Before Sleep</a>
-          <a href="https://lifewithallah.com/dhikr-dua/after-salah/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🕌 After Salah</a>
-          <a href="https://lifewithallah.com/dhikr-dua/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📖 All Adhkar & Duas</a>
-          <a href="https://lifewithallah.com/dhikr-dua/quranic-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌿 Quranic Duas</a>
-          <a href="https://lifewithallah.com/dhikr-dua/sunnah-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 6, textDecoration: 'none', color: '#0b3c3c', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>🌱 Sunnah Duas</a>
-          <a href="https://ia902908.us.archive.org/2/items/surahalmulkpdf/Surah_Al-Mulk_pdf.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah Al-Mulk</a>
-          <a href="https://www.darsaal.com/islam/quran-pdf/arabic/32-Surah-Sajdah-in-Arabic.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah As-Sajdah</a>
-          <a href="https://ia902903.us.archive.org/33/items/Surah-al-waqiah/mafiadoc.com_surah-al-waqiah-pdf-alkalampk_59fd6cec1723dd41187607ee.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah Al-Waqi&apos;ah</a>
-          <a href="https://masjideraza.com/wp-content/uploads/2019/04/Yaseen-Sharif.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 6, textDecoration: 'none', color: '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center' }}>📄 Surah Ya-Sin</a>
+          <a href="https://lifewithallah.com/dhikr-dua/morning-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>🌅 Morning Adhkar</a>
+          <a href="https://lifewithallah.com/dhikr-dua/evening-adhkar/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>🌇 Evening Adhkar</a>
+          <a href="https://lifewithallah.com/dhikr-dua/before-sleep/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>😴 Before Sleep</a>
+          <a href="https://lifewithallah.com/dhikr-dua/after-salah/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>🕌 After Salah</a>
+          <a href="https://lifewithallah.com/dhikr-dua/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>📖 All Adhkar & Duas</a>
+          <a href="https://lifewithallah.com/dhikr-dua/quranic-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>🌿 Quranic Duas</a>
+          <a href="https://lifewithallah.com/dhikr-dua/sunnah-duas/" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '8px', textDecoration: 'none', color: textPrimary, fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>🌱 Sunnah Duas</a>
+          <a href="https://ia902908.us.archive.org/2/items/surahalmulkpdf/Surah_Al-Mulk_pdf.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? 'rgba(154,52,18,0.2)' : '#fff7ed', border: `1px solid ${isDark ? 'rgba(253,186,116,0.3)' : '#fdba74'}`, borderRadius: '8px', textDecoration: 'none', color: isDark ? '#fbbf24' : '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(251,191,36,0.2)' : '0 4px 12px rgba(245,158,11,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>📄 Surah Al-Mulk</a>
+          <a href="https://www.darsaal.com/islam/quran-pdf/arabic/32-Surah-Sajdah-in-Arabic.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? 'rgba(154,52,18,0.2)' : '#fff7ed', border: `1px solid ${isDark ? 'rgba(253,186,116,0.3)' : '#fdba74'}`, borderRadius: '8px', textDecoration: 'none', color: isDark ? '#fbbf24' : '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(251,191,36,0.2)' : '0 4px 12px rgba(245,158,11,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>📄 Surah As-Sajdah</a>
+          <a href="https://ia902903.us.archive.org/33/items/Surah-al-waqiah/mafiadoc.com_surah-al-waqiah-pdf-alkalampk_59fd6cec1723dd41187607ee.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? 'rgba(154,52,18,0.2)' : '#fff7ed', border: `1px solid ${isDark ? 'rgba(253,186,116,0.3)' : '#fdba74'}`, borderRadius: '8px', textDecoration: 'none', color: isDark ? '#fbbf24' : '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(251,191,36,0.2)' : '0 4px 12px rgba(245,158,11,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>📄 Surah Al-Waqi&apos;ah</a>
+          <a href="https://masjideraza.com/wp-content/uploads/2019/04/Yaseen-Sharif.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 18px)', fontSize: 'clamp(12px, 3vw, 14px)', background: isDark ? 'rgba(154,52,18,0.2)' : '#fff7ed', border: `1px solid ${isDark ? 'rgba(253,186,116,0.3)' : '#fdba74'}`, borderRadius: '8px', textDecoration: 'none', color: isDark ? '#fbbf24' : '#9a3412', fontWeight: 500, minHeight: '36px', display: 'flex', alignItems: 'center', transition: 'all 200ms ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isDark ? '0 4px 12px rgba(251,191,36,0.2)' : '0 4px 12px rgba(245,158,11,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>📄 Surah Ya-Sin</a>
         </div>
       </div>
 
       {/* Weekly Summary */}
-      <div className="card-hover" style={{ marginTop: 'clamp(12px, 4vw, 20px)', backgroundColor: 'white', padding: 'clamp(12px, 4vw, 20px)', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+      <div className="card-hover fade-in-up" style={{ 
+        marginTop: 'clamp(12px, 4vw, 20px)', 
+        background: isDark 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+        padding: 'clamp(12px, 4vw, 20px)', 
+        borderRadius: '12px', 
+        boxShadow: isDark 
+          ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' 
+          : '0 4px 20px rgba(2,6,23,0.1), inset 0 1px 0 rgba(255,255,255,0.8)', 
+        border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`
+      }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '4px' }}>Weekly Summary {friendsProfiles.length > 0 && `(Friends)`}</h2>
-            <p style={{ margin: 0, color: '#6b7280', fontSize: 'clamp(12px, 3vw, 14px)' }}>Progress of you and your friends over the last 7 days</p>
+            <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '4px', color: textPrimary }}>Weekly Summary {friendsProfiles.length > 0 && `(Friends)`}</h2>
+            <p style={{ margin: 0, color: textMuted, fontSize: 'clamp(12px, 3vw, 14px)' }}>Progress of you and your friends over the last 7 days</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '500', color: '#374151' }}>Select Person:</label>
+            <label style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '500', color: textPrimary }}>Select Person:</label>
             <select
               value={selectedProfileId}
               onChange={(e) => setSelectedProfileId(e.target.value)}
               style={{ 
                 padding: 'clamp(8px, 2vw, 10px) clamp(10px, 3vw, 12px)', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '6px', 
-                backgroundColor: 'white',
+                border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, 
+                borderRadius: '8px', 
+                backgroundColor: isDark ? '#1e293b' : 'white',
+                color: textPrimary,
                 fontSize: 'clamp(12px, 3vw, 14px)',
                 minHeight: '36px',
                 width: '100%'
@@ -1149,8 +1368,19 @@ useEffect(() => {
 
       {/* Tasks of the Day - visible only when logged in */}
       {userId && (
-      <div id="tasks" className="card-hover" style={{ marginTop: 'clamp(12px, 4vw, 20px)', backgroundColor: 'white', padding: 'clamp(12px, 4vw, 20px)', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '16px' }}>Tasks of the Day</h2>
+      <div id="tasks" className="card-hover fade-in-up" style={{ 
+        marginTop: 'clamp(12px, 4vw, 20px)', 
+        background: isDark 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+        padding: 'clamp(12px, 4vw, 20px)', 
+        borderRadius: '12px', 
+        boxShadow: isDark 
+          ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' 
+          : '0 4px 20px rgba(2,6,23,0.1), inset 0 1px 0 rgba(255,255,255,0.8)', 
+        border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`
+      }}>
+        <h2 style={{ fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600', margin: 0, marginBottom: '16px', color: textPrimary }}>Tasks of the Day</h2>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <Input value={newTask} onChange={e => setNewTask((e.target as HTMLInputElement).value)} placeholder="Add any task or goal" style={{ flex: 1 }} onKeyDown={e => e.key === 'Enter' && addTask()} aria-label="New task" />
           <Button onClick={addTask} variant="primary" aria-label="Add task">Add</Button>
@@ -1159,14 +1389,48 @@ useEffect(() => {
           {tasks.map(t => {
             const mine = t.user_id && userId ? t.user_id === userId : true;
             return (
-              <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, border: '1px solid #e5e7eb', borderRadius: 8, opacity: mine ? 1 : 0.7 }}>
-                <input type="checkbox" checked={t.is_done} disabled={!mine} onChange={e => mine && toggleTask(t.id, e.target.checked)} />
-                <span style={{ textDecoration: t.is_done ? 'line-through' : 'none', color: t.is_done ? '#6b7280' : '#111827' }}>{t.title}</span>
-                {!mine && <span style={{ marginLeft: 'auto', fontSize: 12, color: '#64748b' }}>read-only</span>}
+              <label key={t.id} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 10, 
+                padding: 12, 
+                border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, 
+                borderRadius: '8px', 
+                backgroundColor: isDark ? '#1e293b' : '#f9fafb',
+                opacity: mine ? 1 : 0.7,
+                transition: 'all 200ms ease'
+              }}
+              onMouseEnter={(e) => {
+                if (mine) {
+                  e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#f3f4f6';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f9fafb';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={t.is_done} 
+                  disabled={!mine} 
+                  onChange={e => mine && toggleTask(t.id, e.target.checked)}
+                  style={{ 
+                    cursor: mine ? 'pointer' : 'not-allowed',
+                    accentColor: isDark ? '#3b82f6' : '#2563eb'
+                  }}
+                />
+                <span style={{ 
+                  textDecoration: t.is_done ? 'line-through' : 'none', 
+                  color: t.is_done ? textMuted : textPrimary,
+                  flex: 1
+                }}>{t.title}</span>
+                {!mine && <span style={{ marginLeft: 'auto', fontSize: 12, color: textMuted }}>read-only</span>}
               </label>
             );
           })}
-          {tasks.length === 0 && <div style={{ color: '#6b7280', fontSize: 14 }}>No tasks yet for {currentDate}. Add one above.</div>}
+          {tasks.length === 0 && <div style={{ color: textMuted, fontSize: 14, textAlign: 'center', padding: '20px' }}>No tasks yet for {currentDate}. Add one above.</div>}
         </div>
       </div>
       )}
@@ -1177,7 +1441,7 @@ useEffect(() => {
       </Suspense>
 
       {/* Advanced Analytics - Lazy Loaded */}
-      <Suspense fallback={<div style={{ marginTop: '20px', backgroundColor: 'white', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>Loading Analytics...</div>}>
+      <Suspense fallback={<div style={{ marginTop: '20px', background: isDark ? '#0f172a' : 'white', padding: '20px', borderRadius: '12px', textAlign: 'center', color: textPrimary, border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>Loading Analytics...</div>}>
         <Analytics selectedProfileId={selectedProfileId} profiles={profiles} />
       </Suspense>
 

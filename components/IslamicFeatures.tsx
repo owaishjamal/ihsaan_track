@@ -21,7 +21,20 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
   const [manualLng, setManualLng] = useState<string>('');
   const [pinCountry, setPinCountry] = useState<string>('IN');
   const [locationName, setLocationName] = useState<string>('');
-  const isDark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark';
+  const [isDark, setIsDark] = useState(false);
+
+  // Make theme reactive
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDark(typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark');
+    };
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    if (typeof document !== 'undefined') {
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    }
+    return () => observer.disconnect();
+  }, []);
 
   // Dhikr types configuration
   const dhikrTypes = useMemo(() => [
@@ -257,9 +270,21 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
   ];
 
   return (
-    <div style={{ marginTop: '20px', background: isDark ? '#0f172a' : 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', border: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}>
+    <div className="fade-in-up" style={{ 
+      marginTop: '20px', 
+      background: isDark 
+        ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+        : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+      borderRadius: '12px', 
+      boxShadow: isDark 
+        ? '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' 
+        : '0 4px 20px rgba(2,6,23,0.1), inset 0 1px 0 rgba(255,255,255,0.8)', 
+      overflow: 'hidden', 
+      border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+      position: 'relative'
+    }}>
       {/* Tab Navigation */}
-      <div className="table-responsive" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0, display: 'block', overflowX: 'scroll', overflowY: 'visible', borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}>
+      <div className="table-responsive" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0, display: 'block', overflowX: 'scroll', overflowY: 'visible', borderBottom: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, background: isDark ? 'rgba(15,23,42,0.5)' : 'rgba(248,250,252,0.5)' }}>
         <div style={{ display: 'flex', minWidth: 'max-content' }}>
           {tabs.map(tab => (
             <button
@@ -269,17 +294,36 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
                 flexShrink: 0,
                 padding: 'clamp(10px, 3vw, 12px) clamp(12px, 4vw, 16px)',
                 border: 'none',
-                backgroundColor: activeTab === tab.id ? (isDark ? '#0b1220' : '#f3f4f6') : (isDark ? '#0f172a' : 'white'),
+                background: activeTab === tab.id 
+                  ? (isDark 
+                    ? 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0.08) 100%)')
+                  : 'transparent',
                 color: activeTab === tab.id ? (isDark ? '#e2e8f0' : '#1f2937') : (isDark ? '#94a3b8' : '#6b7280'),
                 cursor: 'pointer',
                 fontSize: 'clamp(12px, 3vw, 14px)',
-                fontWeight: activeTab === tab.id ? '600' : '400',
+                fontWeight: activeTab === tab.id ? '700' : '500',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 'clamp(4px, 1vw, 6px)',
                 whiteSpace: 'nowrap',
-                minWidth: 'fit-content'
+                minWidth: 'fit-content',
+                position: 'relative',
+                transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                borderRadius: activeTab === tab.id ? '8px 8px 0 0' : '0'
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+                  e.currentTarget.style.color = isDark ? '#cbd5e1' : '#4b5563';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = isDark ? '#94a3b8' : '#6b7280';
+                }
               }}
             >
               <span>{tab.icon}</span>
@@ -323,7 +367,7 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
             )}
             
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <select value={pinCountry} onChange={e => setPinCountry(e.target.value)} style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px' }}>
+              <select value={pinCountry} onChange={e => setPinCountry(e.target.value)} style={{ padding: '8px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '6px', backgroundColor: isDark ? '#1e293b' : 'white', color: isDark ? '#e2e8f0' : '#111827' }}>
                 <option value="IN">IN</option>
                 <option value="US">US</option>
                 <option value="GB">GB</option>
@@ -334,7 +378,7 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
                 <option value="SA">SA</option>
                 <option value="AE">AE</option>
               </select>
-              <input type="text" value={manualLat} onChange={e => setManualLat(e.target.value)} placeholder="Pincode" style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px' }} />
+              <input type="text" value={manualLat} onChange={e => setManualLat(e.target.value)} placeholder="Pincode" style={{ padding: '8px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '6px', backgroundColor: isDark ? '#1e293b' : 'white', color: isDark ? '#e2e8f0' : '#111827' }} />
               <button onClick={async () => {
                 const pin = manualLat.trim();
                 if (!pin) {
@@ -437,7 +481,7 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
                 } finally {
                   setLoading(false);
                 }
-              }} style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', opacity: loading ? 0.6 : 1 }} disabled={loading}>
+              }} style={{ padding: '8px 12px', backgroundColor: isDark ? '#1e293b' : '#f3f4f6', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '6px', cursor: 'pointer', opacity: loading ? 0.6 : 1, color: isDark ? '#e2e8f0' : '#111827' }} disabled={loading}>
                 {loading ? '⏳ Searching...' : 'Set by Pincode'}
               </button>
               <button onClick={() => {
@@ -510,15 +554,15 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
                 </div>
               </div>
             ) : !location ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#6b7280', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: '16px', marginBottom: '8px', fontWeight: 600, color: '#374151' }}>📍 Set Your Location</div>
+              <div style={{ textAlign: 'center', padding: '24px', color: isDark ? '#94a3b8' : '#6b7280', backgroundColor: isDark ? '#1e293b' : '#f9fafb', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}` }}>
+                <div style={{ fontSize: '16px', marginBottom: '8px', fontWeight: 600, color: isDark ? '#e2e8f0' : '#374151' }}>📍 Set Your Location</div>
                 <div style={{ fontSize: '14px', marginBottom: '16px' }}>Please set your location using one of the options above to see prayer times</div>
-                <div style={{ fontSize: '12px', color: '#9ca3af' }}>You can use: Pincode, Manual entry, or &quot;Use My Location&quot;</div>
+                <div style={{ fontSize: '12px', color: isDark ? '#64748b' : '#9ca3af' }}>You can use: Pincode, Manual entry, or &quot;Use My Location&quot;</div>
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#6b7280', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: '16px', marginBottom: '8px', fontWeight: 600, color: '#374151' }}>⏳ Loading prayer times...</div>
-                <div style={{ fontSize: '14px', color: '#9ca3af' }}>Fetching prayer times for your location</div>
+              <div style={{ textAlign: 'center', padding: '24px', color: isDark ? '#94a3b8' : '#6b7280', backgroundColor: isDark ? '#1e293b' : '#f9fafb', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}` }}>
+                <div style={{ fontSize: '16px', marginBottom: '8px', fontWeight: 600, color: isDark ? '#e2e8f0' : '#374151' }}>⏳ Loading prayer times...</div>
+                <div style={{ fontSize: '14px', color: isDark ? '#64748b' : '#9ca3af' }}>Fetching prayer times for your location</div>
               </div>
             )}
           </div>
@@ -554,15 +598,15 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
             {quranProgress ? (
               <div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '20px' }}>
-                  <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#f0f9ff', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '600', color: '#0369a1' }}>{quranProgress.pages_read || 0}</div>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>Pages Read</div>
-                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>Today</div>
+                  <div style={{ textAlign: 'center', padding: '16px', backgroundColor: isDark ? 'rgba(59,130,246,0.1)' : '#f0f9ff', borderRadius: '8px', border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'transparent'}` }}>
+                    <div style={{ fontSize: '24px', fontWeight: '600', color: isDark ? '#60A5FA' : '#0369a1' }}>{quranProgress.pages_read || 0}</div>
+                    <div style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#6b7280' }}>Pages Read</div>
+                    <div style={{ fontSize: '12px', color: isDark ? '#64748b' : '#9ca3af' }}>Today</div>
                   </div>
-                  <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '600', color: '#16a34a' }}>{quranProgress.verses_read || 0}</div>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>Verses Read</div>
-                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>Today</div>
+                  <div style={{ textAlign: 'center', padding: '16px', backgroundColor: isDark ? 'rgba(34,197,94,0.1)' : '#f0fdf4', borderRadius: '8px', border: `1px solid ${isDark ? 'rgba(34,197,94,0.2)' : 'transparent'}` }}>
+                    <div style={{ fontSize: '24px', fontWeight: '600', color: isDark ? '#86efac' : '#16a34a' }}>{quranProgress.verses_read || 0}</div>
+                    <div style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#6b7280' }}>Verses Read</div>
+                    <div style={{ fontSize: '12px', color: isDark ? '#64748b' : '#9ca3af' }}>Today</div>
                   </div>
                 </div>
                 
@@ -570,13 +614,13 @@ export function IslamicFeatures({ selectedProfileId, profiles }: IslamicFeatures
                   <input
                     type="number"
                     placeholder="Pages"
-                    style={{ flex: 1, padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                    style={{ flex: 1, padding: '8px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '6px', backgroundColor: isDark ? '#1e293b' : 'white', color: isDark ? '#e2e8f0' : '#111827' }}
                     id="pages-input"
                   />
                   <input
                     type="number"
                     placeholder="Verses"
-                    style={{ flex: 1, padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                    style={{ flex: 1, padding: '8px', border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`, borderRadius: '6px', backgroundColor: isDark ? '#1e293b' : 'white', color: isDark ? '#e2e8f0' : '#111827' }}
                     id="verses-input"
                   />
                   <button
