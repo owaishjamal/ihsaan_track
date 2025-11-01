@@ -19,12 +19,16 @@ export default function SignupPage() {
     setLoading(true);
     
     try {
-      // Step 1: Create auth user
+      // Step 1: Create auth user with name in metadata for later profile creation
       const { data: authData, error: authError } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            // Always store the name from the form if provided, otherwise use email part
+            name: name.trim() ? name.trim() : email.split('@')[0]
+          }
         }
       });
       
@@ -52,7 +56,12 @@ export default function SignupPage() {
       }
 
       // If still no session, email confirmation might be required
+      // Store the name in localStorage so we can use it after email confirmation
       if (!session) {
+        if (name.trim()) {
+          // Store name in localStorage for later use after email confirmation
+          localStorage.setItem('pending_profile_name', name.trim());
+        }
         setLoading(false);
         setError('Please check your email to confirm your account. After confirmation, you can log in.');
         return;
@@ -66,7 +75,8 @@ export default function SignupPage() {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ name: name || (email.split('@')[0]) })
+        // Use the name from the form field - always prioritize form input
+        body: JSON.stringify({ name: name.trim() ? name.trim() : email.split('@')[0] })
       });
 
       if (!profileResponse.ok) {

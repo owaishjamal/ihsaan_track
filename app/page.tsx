@@ -124,12 +124,70 @@ export default function Page() {
   const createMyTracker = useCallback(async () => {
     if (!userId) return;
     
-    const defaultName = userEmail ? userEmail.split('@')[0] : 'Me';
+    // Try to get name - priority: localStorage (from signup) > metadata > email extraction
+    let profileName = 'Me';
+    
+    try {
+      // Method 1: Check localStorage first (name saved during signup when email confirmation was required)
+      if (typeof window !== 'undefined') {
+        const storedName = localStorage.getItem('pending_profile_name');
+        if (storedName && storedName.trim()) {
+          profileName = storedName.trim();
+          // Clear it after use
+          localStorage.removeItem('pending_profile_name');
+          console.log('✅ Found name from signup form in localStorage:', profileName);
+        } else {
+          // Method 2: Try from session user metadata (stored during signup)
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.user_metadata?.name) {
+            profileName = session.user.user_metadata.name.trim();
+            console.log('✅ Found name from signup form in session metadata:', profileName);
+          } else {
+            // Method 3: Try from getUser() metadata
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.user_metadata?.name) {
+              profileName = user.user_metadata.name.trim();
+              console.log('✅ Found name from signup form in user metadata:', profileName);
+            } else {
+              // Method 4: Extract name from email (fallback only)
+              console.log('⚠️ Name not found, extracting from email as fallback');
+              if (userEmail) {
+                const emailParts = userEmail.split('@')[0];
+                // If email is like "john.doe@example.com", convert to "John Doe"
+                if (emailParts.includes('.')) {
+                  profileName = emailParts.split('.').map(part => 
+                    part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+                  ).join(' ');
+                } else {
+                  // Single word - capitalize first letter
+                  profileName = emailParts.charAt(0).toUpperCase() + emailParts.slice(1).toLowerCase();
+                }
+                console.log('Using name extracted from email:', profileName);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error getting user metadata:', e);
+      // If all fails, use email extraction
+      if (userEmail) {
+        const emailParts = userEmail.split('@')[0];
+        if (emailParts.includes('.')) {
+          profileName = emailParts.split('.').map(part => 
+            part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+          ).join(' ');
+        } else {
+          profileName = emailParts.charAt(0).toUpperCase() + emailParts.slice(1).toLowerCase();
+        }
+      }
+    }
+    
     try {
       const { authFetch } = await import('@/lib/authFetch');
       const res = await authFetch('/api/profiles', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: defaultName })
+        body: JSON.stringify({ name: profileName })
       });
       if (res.ok) {
         const p = await res.json();
