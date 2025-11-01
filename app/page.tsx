@@ -984,7 +984,7 @@ useEffect(() => {
         ) : (
           <div className="card-hover" style={{ backgroundColor: isDark ? '#0f172a' : 'white', padding: 'clamp(12px, 4vw, 16px)', borderRadius: '8px', boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', border: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}>
             <div style={{ fontWeight: 600, marginBottom: 8, color: textPrimary }}>Create your tracker</div>
-            <div style={{ color: textMuted, fontSize: 14, marginBottom: 12 }}>You don't have a personal tracker yet. Create one to start tracking your progress.</div>
+            <div style={{ color: textMuted, fontSize: 14, marginBottom: 12 }}>You don&apos;t have a personal tracker yet. Create one to start tracking your progress.</div>
             <button onClick={createMyTracker} style={{ padding: '8px 12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Create my tracker</button>
           </div>
         )
