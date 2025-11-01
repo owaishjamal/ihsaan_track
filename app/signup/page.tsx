@@ -17,25 +17,79 @@ export default function SignupPage() {
   const onSignup = async () => {
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) {
+    
+    try {
+      // Step 1: Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (authError) {
+        setLoading(false);
+        setError(authError.message);
+        return;
+      }
+
+      // Check if user was created
+      if (!authData.user) {
+        setLoading(false);
+        setError('Failed to create user account. Please try again.');
+        return;
+      }
+
+      // Step 2: Check if session is available (depends on email confirmation settings)
+      // Try to get session - if email confirmation is disabled, session will be available immediately
+      let session = authData.session;
+      
+      if (!session) {
+        // Wait a bit and try again (session might be establishing)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        session = (await supabase.auth.getSession()).data.session;
+      }
+
+      // If still no session, email confirmation might be required
+      if (!session) {
+        setLoading(false);
+        setError('Please check your email to confirm your account. After confirmation, you can log in.');
+        return;
+      }
+
+      // Step 3: Create profile with the session token
+      const token = session.access_token;
+      const profileResponse = await fetch('/api/profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ name: name || (email.split('@')[0]) })
+      });
+
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.json().catch(() => ({ error: 'Failed to create profile' }));
+        setLoading(false);
+        setError(errorData.error || 'Failed to create profile. Please try again.');
+        return;
+      }
+
+      const newProfile = await profileResponse.json();
+      if (!newProfile || !newProfile.id) {
+        setLoading(false);
+        setError('Profile created but invalid response. Please try logging in.');
+        return;
+      }
+
+      // Step 4: Success - redirect to home
       setLoading(false);
-      setError(error.message);
-      return;
+      window.location.href = '/';
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message || 'An unexpected error occurred. Please try again.');
     }
-    // Create a profile owned by this user
-    const session = (await supabase.auth.getSession()).data.session;
-    const token = session?.access_token;
-    await fetch('/api/profiles', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ name: name || (email.split('@')[0]) })
-    });
-    setLoading(false);
-    window.location.href = '/';
   };
 
   return (

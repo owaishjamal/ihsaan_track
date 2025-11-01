@@ -27,6 +27,7 @@ export default function Page() {
   const [friendRequestsReceived, setFriendRequestsReceived] = useState<Array<any>>([]);
   const [friendRequestsSent, setFriendRequestsSent] = useState<Array<any>>([]);
   const [showFriendsSection, setShowFriendsSection] = useState(false);
+  const [profileCreationAttempted, setProfileCreationAttempted] = useState(false);
 
   // Memoize quotes to prevent recreation on every render
   const quotes = useMemo(() => [
@@ -51,7 +52,7 @@ export default function Page() {
   ], []);
 
   // Load profiles from API
-  const loadProfiles = async () => {
+  const loadProfiles = useCallback(async () => {
     try {
       const response = await fetch('/api/profiles');
       const data = await response.json();
@@ -60,7 +61,7 @@ export default function Page() {
     } catch (error) {
       console.error('Error loading profiles:', error);
     }
-  };
+  }, []);
 
   // Load entries from API
   const loadEntries = async () => {
@@ -92,7 +93,7 @@ export default function Page() {
       setLoading(false);
     };
     loadData();
-  }, []);
+  }, [loadProfiles]);
 
   // Track auth state for showing login/logout
   useEffect(() => {
@@ -119,13 +120,59 @@ export default function Page() {
     try { localStorage.setItem('theme', theme); } catch {}
   }, [theme]);
 
-// Select current user's profile if available
-useEffect(() => {
-  if (!selectedProfileId && userId) {
-    const mine = profiles.find(p => p.user_id === userId);
-    if (mine) setSelectedProfileId(mine.id);
+  // Helper to create my tracker profile if missing - MUST BE BEFORE useEffect THAT USES IT
+  const createMyTracker = useCallback(async () => {
+    if (!userId) return;
+    
+    const defaultName = userEmail ? userEmail.split('@')[0] : 'Me';
+    try {
+      const { authFetch } = await import('@/lib/authFetch');
+      const res = await authFetch('/api/profiles', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: defaultName })
+      });
+      if (res.ok) {
+        const p = await res.json();
+        setProfiles(prev => [...prev, p]);
+        setSelectedProfileId(p.id);
+        setProfileCreationAttempted(true);
+        // Refresh profiles to ensure new profile is visible to others
+        loadProfiles();
+        return true;
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to create profile:', errorData);
+        return false;
+      }
+    } catch (e) { 
+      console.error('Failed to create my tracker', e); 
+      return false;
     }
-}, [profiles, selectedProfileId, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, userEmail]);
+
+// Select current user's profile if available, or create one if missing
+useEffect(() => {
+  if (!userId || loading || profileCreationAttempted) return;
+  
+  const mine = profiles.find(p => p.user_id === userId);
+  
+  if (mine) {
+    // Profile exists - select it
+    if (!selectedProfileId) setSelectedProfileId(mine.id);
+    setProfileCreationAttempted(true); // Mark as attempted to prevent re-checking
+  } else {
+    // Profile doesn't exist - create it automatically
+    // Only create if profiles have been loaded (not during initial load)
+    if (profiles.length >= 0) {
+      setProfileCreationAttempted(true);
+      createMyTracker().catch(e => {
+        console.error('Failed to auto-create profile:', e);
+        setProfileCreationAttempted(false); // Allow retry on error
+      });
+    }
+  }
+}, [profiles, selectedProfileId, userId, loading, profileCreationAttempted, createMyTracker]);
 
   // Load friends and friend requests
   const loadFriends = useCallback(async () => {
@@ -150,10 +197,13 @@ useEffect(() => {
         const sentData = await sentRes.json();
         setFriendRequestsSent(sentData || []);
       }
+      
+      // Refresh profiles when friends are loaded to catch new users
+      loadProfiles();
     } catch (e) {
       if (process.env.NODE_ENV === 'development') console.error('Failed to load friends', e);
     }
-  }, [userId]);
+  }, [userId, loadProfiles]);
 
   // Load friends when user is available
   useEffect(() => {
@@ -522,22 +572,6 @@ useEffect(() => {
     );
   }
 
-  // Helper to create my tracker profile if missing
-  const createMyTracker = async () => {
-    const defaultName = userEmail ? userEmail.split('@')[0] : 'Me';
-    try {
-      const { authFetch } = await import('@/lib/authFetch');
-      const res = await authFetch('/api/profiles', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: defaultName })
-      });
-      if (res.ok) {
-        const p = await res.json();
-        setProfiles(prev => [...prev, p]);
-        setSelectedProfileId(p.id);
-      }
-    } catch (e) { console.error('Failed to create my tracker', e); }
-  };
 
   const isDark = theme === 'dark';
   const pageBg = isDark ? '#0b1220' : '#f8fafc';
@@ -994,7 +1028,15 @@ useEffect(() => {
       {/* Friends Management Section */}
       {userId && (
         <div id="friends" className="card-hover" style={{ backgroundColor: isDark ? '#0f172a' : 'white', borderRadius: '8px', boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px', overflow: 'visible', border: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}` }}>
-          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', color: textPrimary }} onClick={() => setShowFriendsSection(!showFriendsSection)}>
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${isDark ? '#1e293b' : '#e5e7eb'}`, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', color: textPrimary }} onClick={() => {
+            const newState = !showFriendsSection;
+            setShowFriendsSection(newState);
+            // Refresh profiles and friends when opening the section to catch new users
+            if (newState) {
+              loadProfiles();
+              if (userId) loadFriends();
+            }
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>👥 Friends & Requests</span>
               {(friendRequestsReceived.length > 0 || friendRequestsSent.length > 0) && (
